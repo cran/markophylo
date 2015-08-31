@@ -17,6 +17,12 @@ model1 <- estimaterates(usertree = simdata1$tree, userphyl = simdata1$data,
                         modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
 print(model1)
 
+## ----eval=FALSE----------------------------------------------------------
+#  model1 <- estimaterates(usertree = simdata1$tree, userphyl = simdata1$data,
+#                          alphabet = c(1, 2), rootprob = "equal",
+#                          modelmat = "ARD")
+#  print(model1)
+
 ## ------------------------------------------------------------------------
 print(class(model1))
 
@@ -49,8 +55,19 @@ print(table(simdata2$data))
 ## ------------------------------------------------------------------------
 model2 <- estimaterates(usertree = simdata2$tree, userphyl = simdata2$data, 
                         alphabet = c(1, 2), bgtype = "ancestornodes", bg = c(7),
-                        rootprob = "equal", modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
+                        rootprob = "equal", modelmat = "ARD")
 print(model2)
+
+## ---- fig.show='asis',fig.align = 'center'-------------------------------
+ape::plot.phylo(simdata2$tree, edge.width = 2, show.tip.label = FALSE, no.margin = TRUE)
+ape::nodelabels(frame = "circle", cex = 0.7)
+ape::tiplabels(frame = "circle", cex = 0.7)
+
+## ------------------------------------------------------------------------
+model2_2 <- estimaterates(usertree = simdata2$tree, userphyl = simdata2$data, 
+                        alphabet = c(1, 2), bgtype = "listofnodes", bg = list(c(3,4,7),c(1,2,5,6,7)),
+                        rootprob = "equal", modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
+print(model2_2)
 
 ## ---- fig.show='asis',fig.align = 'center'-------------------------------
 plottree(model2, colors=c("blue", "darkgreen"), edge.width = 2, show.tip.label = FALSE, 
@@ -65,15 +82,14 @@ print(table(simdata3$data))
 model3 <- estimaterates(usertree = simdata3$tree, userphyl = simdata3$data, 
                         alphabet = c("a", "c", "g", "t"), rootprob = "equal", 
                         partition = list(c(1:2500), c(2501:5000)), 
-                        modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
-                                            1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
+                        modelmat = "ER")
 print(model3)
 
 ## ------------------------------------------------------------------------
 data(simdata4)
 print(table(simdata4$data))
 model4 <- estimaterates(usertree = simdata4$tree, userphyl = simdata4$data, 
-                        alphabet = c("a", "c", "g", "t"), rootprob = "maxlik", 
+                        alphabet = c("a", "c", "g", "t"), rootprob = "maxlik",
                         ratevar = "discgamma", nocat = 4, 
                         modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
                                             1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
@@ -124,12 +140,55 @@ model5 <- estimaterates(usertree = simdata5$tree, userphyl = simdata5$data,
 print(model5)
 
 ## ------------------------------------------------------------------------
+mp_data <- read.table("http://info.mcmaster.ca/~udang/mp_example_data", header = TRUE)
+mp_tree <- ape::read.tree("http://info.mcmaster.ca/~udang/mp_example_tree")
+mp_model <- estimaterates(usertree = mp_tree, userphyl = mp_data,
+                        alphabet = c(1, 2, 3, 4), rootprob = "equal",
+                        modelmat = "BD")
+print(mp_model)
+
+## ------------------------------------------------------------------------
+mp_model_2 <- estimaterates(usertree = mp_tree, userphyl = mp_data,
+                        alphabet = c(1, 2, 3, 4), rootprob = "maxlik",
+                        modelmat = "BD")
+print(mp_model_2)
+
+## ------------------------------------------------------------------------
+matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA
+), nrow = 4, ncol = 4)
+
+## ------------------------------------------------------------------------
+matrix(c(NA, 1, 2, 3, 1, NA, 4, 5, 2, 4, NA, 6, 3, 5, 6, NA
+), 4,4)
+
+## ------------------------------------------------------------------------
+matrix(c(NA, 1, 2, 3, 4, NA, 5, 6, 7, 8, NA, 9, 10, 11, 12, 
+NA), 4, 4)
+
+## ------------------------------------------------------------------------
+matrix(c(NA, 1, 0, 0, 2, NA, 1, 0, 0, 2, NA, 1, 0, 0, 2, NA
+), 4, 4)
+
+## ------------------------------------------------------------------------
+matrix(c(NA, 1, 0, 0, 1, NA, 1, 0, 0, 1, NA, 1, 0, 0, 1, NA
+), 4, 4)
+
+## ------------------------------------------------------------------------
+matrix(c(NA, 1, 0, 0, 1, NA, 2, 0, 0, 2, NA, 3, 0, 0, 3, NA
+), 4, 4)
+
+## ------------------------------------------------------------------------
+matrix(c(NA, 1, 0, 0, 4, NA, 2, 0, 0, 5, NA, 3, 0, 0, 6, NA
+), 4, 4)
+
+## ------------------------------------------------------------------------
 m <- matrix(c(NA, 1, 2, 0, NA, 1, 0, 0, NA), 3, 3)
 rownames(m) <- colnames(m) <- c("Absent", "1 copy", "2 copies")
 print(m)
 
 ## ------------------------------------------------------------------------
 m <- matrix(0, 5, 5)
+diag(m) <- NA
 diag(m[-1, ]) <- 1
 diag(m[, -1]) <- 2
 print(m)

@@ -1,0 +1,21 @@
+markophylo v1.0-2 (Release date: 2015-08-28)
+==============
+Changes:
+
+* Included automatically built rate matrices. Speeds up model specification as the rate matrix no longer needs to be typed in as long as it is one of the supported matrix types.
+* Forced reversibility.
+* Both matrices and dataframes are now accepted for the discrete character data argument.
+* Finer control of optimization problem boundaries. Expected to be useful when branch lengths are in units other than expected substitutions per site.
+* Argument matching for some arguments.
+* A minimum version of 1.0.0 is now required for the stringr dependency.
+
+* More tests for arguments in model specification.
+* More unit tests.
+
+* External data example in vignette.
+* Help file maintainance.
+* NAMESPACE and DESCRIPTION maintainance.
+
+markophylo v1.0-1 (Release date: 2014-07-07)
+==============
+First release.

@@ -5,24 +5,24 @@
 Estimate substitution rate matrix.
 }
 \description{
-Estimate a substitution rate matrix. Users can specify a substitution rate matrix and estimate it. Partition analysis, gamma rate variation, estimating root frequencies of the discrete characters, and specifying clades (or a set of branches) with their own unique rates are also possible. See arguments below.}
+Estimate a substitution rate matrix. Users can specify a substitution rate matrix and estimate it. Partition analysis, gamma rate variation, estimating root frequencies of the discrete characters, and specifying clades (or a set of branches) with their own unique rates are also possible. See arguments below. See vignette for detailed examples.}
 \usage{
 estimaterates(usertree = NULL, userphyl = NULL, matchtipstodata = FALSE,
               unobserved = NULL, alphabet = NULL, modelmat = NULL, 
               bgtype = "listofnodes", bg = NULL, partition = NULL, 
-              ratevar = FALSE, nocat = 4, numhessian = TRUE, 
-              rootprob = NULL, rpvec = NULL, ...)
+              ratevar = FALSE, nocat = 4, reversible = FALSE, numhessian = TRUE, 
+              rootprob = NULL, rpvec = NULL, lowli = 0.001, upli = 100, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{usertree}{
-Rooted binary tree of class "phylo". Read in Newick tree using read.tree() from package ape before passing this argument. The branch lengths must be in expected substitutions per site. Trees estimated using MrBayes and BEAST, for instance, yield branch lengths using that scale.
+Rooted binary tree of class "phylo". Read in Newick tree using read.tree() from package ape before passing this argument. The branch lengths must be in expected substitutions per site (but see lowli and upli arguments). Trees estimated using MrBayes and BEAST, for instance, yield branch lengths using that scale. If an unrooted tree is available, look into the ``root" and ``midpoint.root" functions from the APE and phytools packages, respectively.
 }
   \item{userphyl}{
-A matrix of phyletic patterns. Rows represent the discrete character patterns and columns represent the taxa. These data can be numeric or character (but not both). 
+A matrix or data frame of phyletic patterns. Rows represent the discrete character patterns and columns represent the taxa. These data can be numeric or character (but not both). 
 }
   \item{matchtipstodata}{
-The default is FALSE, which means that the ordering of the taxa in the data matrix must match the internal ordering of tip labels of the tree. Set to TRUE, if the column names of the data matrix, i.e., the taxa names, are all present in the tip labels of the tree provided, in which case, the restriction on ordering is not necessary.
+The default is FALSE, which means that the ordering of the taxa in the data matrix must match the internal ordering of tip labels of the tree. Set to TRUE, if the column names of the data matrix, i.e., the taxa names, are all present, with the same spelling and notation in the tip labels of the tree provided, in which case, the restriction on ordering is not necessary.
 }
   \item{unobserved}{
 A matrix of unobserved phyletic patterns, representing possible sampling or acquisition bias. Each row should be a unique phyletic pattern.
@@ -31,41 +31,72 @@ A matrix of unobserved phyletic patterns, representing possible sampling or acqu
 The set of discrete characters used. May be integer only or character only.
 }
   \item{modelmat}{
-A square matrix denoting the substitution rates to be estimated. The number of rows and columns corresponds to the total number of discete states possible in the data. For example, using matrix(c(1, 2, 2, 1), 2, 2) means that two rates must be estimated corresponding to the entries 1 and 2, respectively. Using matrix matrix(c(1, 2, 0, 1), 2, 2) means that two rates must be estimated as before, but the entry 0 corresponds to a substitution that is not permitted (hence, does not need to be estimated). See examples for more examples.
+Can be one of two options: pre-built or user-specified. For the pre-built matrices, use:
+ \itemize{
+   \item "ER" for an equal rates matrix, e.g., matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA
+), nrow = 4, ncol = 4)
+   \item "SYM" for a symmetric matrix, e.g., matrix(c(NA, 1, 2, 3, 1, NA, 4, 5, 2, 4, NA, 6, 3, 5, 6, NA
+), 4,4)
+   \item "ARD" for an all rates different matrix, e.g., matrix(c(NA, 1, 2, 3, 4, NA, 5, 6, 7, 8, NA, 9, 10, 11, 12, 
+NA), 4, 4)
+   \item "GTR" for a general time reversible model. This sets reversible to be TRUE, rootprob to be "maxlik", and the rate matrix supplied to the function is symmetric. The estimated rate matrix can be written as the product of a symmetric matrix multiplied by a diagonal matrix (consisting of the estimated root probabilities).
+   \item "BD" for a standard birth death matrix, e.g., matrix(c(NA, 1, 0, 0, 2, NA, 1, 0, 0, 2, NA, 1, 0, 0, 2, NA
+), 4, 4)
+   \item "BDER" for a standard birth death matrix, e.g., matrix(c(NA, 1, 0, 0, 1, NA, 1, 0, 0, 1, NA, 1, 0, 0, 1, NA
+), 4, 4)
+   \item "BDSYM" for a standard birth death matrix, e.g., matrix(c(NA, 1, 0, 0, 1, NA, 2, 0, 0, 2, NA, 3, 0, 0, 3, NA
+), 4, 4)
+   \item "BDARD" for an all rates different birth death matrix, e.g., matrix(c(NA, 1, 0, 0, 4, NA, 2, 0, 0, 5, NA, 3, 0, 0, 6, NA
+), 4, 4)
+ }
+These pre-built matrices are inspired by the APE and DiscML packages.
+
+A square matrix can also be input that consists of integer values denoting the indices of the substitution rates to be estimated. The number of rows and columns corresponds to the total number of discete states possible in the data. For example, using matrix(c(NA, 1, 2, NA), 2, 2) means that two rates must be estimated corresponding to the entries 1 and 2, respectively. Using matrix(c(NA, 1, 0, NA), 2, 2) means that only one rate must be estimated and the entry 0 corresponds to a substitution that is not permitted (hence, does not need to be estimated). See examples and vignette for more examples.
 }
   \item{bgtype}{
 Use this to group branches hypothesized to follow the same rates (but differ from other branches). If clade-specific insertion and deletion rates are required to be estimated, use argument option "ancestornodes". If, on the other hand, a group of branches (not in a clade) are hypothesized to follow the same rates, use argument option "listofnodes".}
   \item{bg}{
-A vector of nodes should be provided if the "ancestornodes" option was chosen for argument "bgtype". If, on the other hand, "listofnodes" was chosen, a list should be provided with each element of the list being a vector of nodes that limit the branches that follow the same rates. See examples.
+A vector of nodes should be provided if the "ancestornodes" option was chosen for argument "bgtype". If, on the other hand, "listofnodes" was chosen, a list should be provided with each element of the list being a vector of nodes that limit the branches that follow the same rates. See examples and vignette.
 }
   \item{partition}{
-A list of vectors (of sites) subject to different evolutionary constraints. For example, supplying list(c(1:2500), c(2501:5000)) means that sites 1 through 2500 follow their own substitution rates distinct from sites 2501 through 5000. These sites correspond to the rows of the data supplied in userphyl.
+A list of vectors (of sites) subject to different evolutionary constraints. For example, supplying list(c(1:2500), c(2501:5000)) means that sites 1 through 2500 follow their own substitution rates distinct from sites 2501 through 5000. These sites correspond to the rows of the data supplied in userphyl. Partition models can be fitted with a common (or unique) gamma distribution for rate variation over all partitions, and/or common root probabilities can be estimated over all partitions.
 }
   \item{ratevar}{
 Default option is FALSE. Specifying "discgamma" implements the discrete gamma approximation model of Yang, 1994. Even if a partition of sites is specified, this option uses the same \eqn{\alpha} parameter for the gamma distribution over all partitions. Specifying "partitionspecificgamma" implements the discrete gamma approximation model in each partition separately.
-The number of categories can be specified using the "nocat" argument. See examples.
+The number of categories can be specified using the "nocat" argument. See examples and vignette.
 }
   \item{nocat}{
 The number of categories for the discrete gamma approximation. 
 }
+  \item{reversible}{
+This option forces a model to be reversible, i.e., the flow from state 'a' to 'b' is the same as the flow from state 'b' to 'a'. Only symmetric transition matrices can be specified in modelmat with this option. Inspired by the DiscML package.
+}
   \item{numhessian}{
-Set to FALSE if standard errors are not required. This speeds up the algorithm. Default is TRUE.
+Set to FALSE if standard errors are not required. This speeds up the algorithm. Default is TRUE. Although the function being used to calculate these errors is reliable, it is rare but possible that the errors are not calculated (due to approximation-associated issues while calculating the Hessian). In this case, try bootstrapping with numhessian=FALSE.
 }
   \item{rootprob}{
 Four options are available: "equal", "stationary", "maxlik", and "user". 
-Option "equal" means that all the discrete characters are given equal weight at the root. 
-Using "stationary" means that the discrete characters are weighted at the root by the stationary frequencies implied by the substitution rate matrix. Note that these can differ based on the partition. In the case that the "bgtype" argument is also provided, an average of the stationary frequencies of all branch groupings is used.
-If "maxlik" is supplied, then the root frequencies are also estimated. These do not differ based on the partition.
-If "user" is supplied here, a vector of root frequency parameters can be provided to argument "rpvec".
+ \itemize{
+ \item Option "equal" means that all the discrete characters are given equal weight at the root. 
+ \item Using "stationary" means that the discrete characters are weighted at the root by the stationary frequencies implied by the substitution rate matrix. Note that these can differ based on the partition. In the case that the "bgtype" argument is also provided, an average of the stationary frequencies of all branch groupings is used.
+ \item If "maxlik" is supplied, then the root frequencies are also estimated. These do not differ based on the partition.
+ \item If "user" is supplied here, a vector of root frequency parameters can be provided to argument "rpvec".
+ }
 }
   \item{rpvec}{
 If option "user" is specified for argument "rootprob", supply a vector of the same length as that provided to argument "alphabet", representing the root frequency parameters.
+}
+  \item{lowli}{
+  For finer control of the boundaries of the optimization problem. The default value is 0.001. This usually suffices if the branch lengths are in expected substitutions per site. However, if branch lengths are in different units, this should be changed accordingly. 
+}
+  \item{upli}{
+  For finer control of the boundaries of the optimization problem. The default value is 100. This usually suffices if the branch lengths are in expected substitutions per site. However, if branch lengths are in different units, this should be changed accordingly. 
 }
   \item{\dots}{
 Passing other arguments to the optimization algorithm "nlminb". For example, control = list(trace = 5) will print progress at every 5th iteration.}
 }
 \details{
-The discrete character patterns should be ordered by the tips of the tree.
+See vignette for detailed examples.
 }
 \value{
 All arguments used while calling the estimaterates function are attached in a list. The following components are also returned in the same list:
@@ -74,7 +105,7 @@ All arguments used while calling the estimaterates function are attached in a li
 \item{time        }{Time taken in seconds.}
 \item{tree        }{The phylogenetic tree used.}
 \item{bg          }{List of group of nodes that capture branches that follow unique substitution rates.}
-\item{results     }{List of results including the parameter estimates for each unique entry of modelmat (excluding zeros), standard errors, number of parameters fit, and AIC and BIC values. Furthermore, details from the optimization routine applied are also available.}
+\item{results     }{List of results including the parameter estimates for each unique entry of modelmat (excluding zeros), standard errors, number of parameters fit, and AIC and BIC values. Furthermore, details from the optimization routine applied are also available. Use ...$results$wop$parsep.}
 \item{data_red    }{Unique phyletic patterns observed.}
 \item{w           }{Number of times each gene phyletic pattern was observed.}
 }
@@ -87,7 +118,11 @@ Utkarsh J. Dang and G. Brian Golding
 \note{
 See the vignette for an in-depth look at some examples.
 }
+\references{
+Paradis, E., Claude, J. & Strimmer, K. 2004. APE: analyses of phylogenetics and evolution in R language. Bioinformatics 20: 289-290. R package version 3.2.
 
+Tane Kim and Weilong Hao 2014. DiscML: An R package for estimating evolutionary rates of discrete characters using maximum likelihood. R package version 1.0.1. 
+}
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 
@@ -109,7 +144,8 @@ See the vignette for an in-depth look at some examples.
 #If the data is known to contain sampling bias such that certain phyletic
 #patterns are not observed, then these unobserved data can be corrected for
 #easily. First, let's create a filtered version of the data following which
-#a correction will be applied within the function.
+#a correction will be applied within the function. Here, any patterns with all
+#ones or twos are filtered out.
 #filterall1 <- which(apply(simdata1$data, MARGIN = 1, FUN = 
 #                            function(x) isTRUE(all.equal(as.vector(x), c(1, 1, 1, 1)))))
 #filterall2 <- which(apply(simdata1$data, MARGIN = 1, FUN = 

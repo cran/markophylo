@@ -10,7 +10,7 @@
 
 <meta name="author" content="Utkarsh J. Dang and G. Brian Golding" />
 
-<meta name="date" content="2015-07-07" />
+<meta name="date" content="2015-08-31" />
 
 <title>Markov Chain Analysis on Phylogenetic Trees</title>
 
@@ -54,9 +54,25 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <div id="header">
 <h1 class="title">Markov Chain Analysis on Phylogenetic Trees</h1>
 <h4 class="author"><em>Utkarsh J. Dang and G. Brian Golding</em></h4>
-<h4 class="date"><em>2015-07-07</em></h4>
+<h4 class="date"><em>2015-08-31</em></h4>
 </div>
 
+<div id="TOC">
+<ul>
+<li><a href="#illustration-1">Illustration 1</a><ul>
+<li><a href="#fitting-a-simple-model-and-evaluating-the-results.">Fitting a simple model and evaluating the results.</a></li>
+<li><a href="#correcting-for-unobservable-patterns">Correcting for unobservable patterns</a></li>
+</ul></li>
+<li><a href="#illustration-2-branch-rate-heterogeneity">Illustration 2: branch rate heterogeneity</a></li>
+<li><a href="#illustration-3-partition-models.">Illustration 3: partition models.</a></li>
+<li><a href="#illustration-4-rate-variation-using-the-gamma-distribution-and-estimating-root-probabilities.">Illustration 4: rate variation using the gamma distribution and estimating root probabilities.</a><ul>
+<li><a href="#correcting-for-unobservable-patterns-1">Correcting for unobservable patterns</a></li>
+</ul></li>
+<li><a href="#illustration-5-partition-models-with-separate-rate-variation-in-each-partition.">Illustration 5: partition models with separate rate variation in each partition.</a></li>
+<li><a href="#illustration-6-importing-data-and-fitting-a-birth-death-model.">Illustration 6: importing data and fitting a birth death model.</a></li>
+<li><a href="#specifying-modelmat">Specifying <em>modelmat</em></a></li>
+</ul>
+</div>
 
 <p>The <em>markophylo</em> package allows for estimating substitution rates using a user-specified, i.e., hypothesis driven, substitution rate matrix in a continuous-time markov chain model on phylogenies. The package is quite efficient, with the workhorse functions written in C++ (using the Rcpp and RcppArmadillo packages), and can analyze data on discrete characters like the following (among others):</p>
 <ul>
@@ -68,7 +84,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </ul>
 <p>The package contains five simulated data sets. These data illustrate the kinds of models that the package is capable of fitting to discrete character data recorded for multiple taxa (for which a phylogeny is supplied by the user). The <em>markophylo::estimaterates</em> function is flexible, capable of capturing the following processes/behaviour:</p>
 <ul>
-<li>Custom substitution rate matrices can be supplied.</li>
+<li>Substitution rate matrices can be automatically built based on user choice. Alternatively, custom user-specified rate matrices can be supplied.</li>
 <li>A custom alphabet can be specified that must be character only or numeric only (mixing numeric and character classes will lead to errors).</li>
 <li>Sites can be split into different partitions, each partition of sites is a group of sites following their own rates different from the sites in the other partitions.</li>
 <li>Gamma rate variation can be specified: a common gamma distribution (with ) over all partitions or separate gamma rates within each partition separately.</li>
@@ -78,6 +94,8 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </ul>
 <div id="illustration-1" class="section level2">
 <h2>Illustration 1</h2>
+<div id="fitting-a-simple-model-and-evaluating-the-results." class="section level3">
+<h3>Fitting a simple model and evaluating the results.</h3>
 <p>Load the package and data <em>simdata1</em>.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(markophylo)
 <span class="kw">data</span>(simdata1)</code></pre>
@@ -95,7 +113,7 @@ ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span cla
 <pre><code>## 
 ##     1     2 
 ##  8814 11186</code></pre>
-<p>Now, using the function <em>estimaterates</em> from the <em>markophylo</em> package, we will estimate a substitution rate matrix from this data. The <em>modelmat</em> argument represents the number of unique rates to be fit using a 2-dimensional matrix, with the diagonals left as NA (see section on creating <em>modelmat</em> below).</p>
+<p>Now, using the function <em>estimaterates</em> from the <em>markophylo</em> package, we will estimate a substitution rate matrix from this data. The <em>modelmat</em> argument represents the number of unique rates to be fit using a 2-dimensional matrix, with the diagonals left as NA (see section on creating <em>modelmat</em> below). The model can be fitted in one of two ways:</p>
 <pre class="sourceCode r"><code class="sourceCode r">model1 &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> simdata1$tree, <span class="dt">userphyl =</span> simdata1$data, 
                         <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="dt">rootprob =</span> <span class="st">&quot;equal&quot;</span>, 
                         <span class="dt">modelmat =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="ot">NA</span>), <span class="dv">2</span>, <span class="dv">2</span>))
@@ -136,12 +154,18 @@ ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span cla
 ## 
 ## 
 ## 
-## Loglikelihood for model wop : -10055.02 
+## -----------------------------------
+## Log-likelihood for model wop : -10055.02 
 ## AIC           for model wop : -20114.03 
 ## BIC           for model wop : -20112.8 
 ## -----------------------------------
-## Time taken: 0.123 seconds.</code></pre>
-<p>The output from printing <em>model1</em> (which is an object of class ‘markophylo’) is self-explanatory. The estimated rates (given as a array in <em>$rates</em>) and the standard errors (both indexed according to the parameter index matrix) are output. The log-likelihood at the maximum likelihood estimates along with the values of the model selection criteria (Akaike information criterion and Bayesian information criterion) are also provided. Because we did not specify <em>a priori</em> any clades to be fit with their own unique rates, these estimates are homogenous over the tree. This is also reflected in the one component list output under “Groups of nodes with the same rates”. Note that the <em>model1</em> object is of class <em>markophylo</em>.</p>
+## Time taken: 0.192 seconds.</code></pre>
+<p>OR</p>
+<pre class="sourceCode r"><code class="sourceCode r">model1 &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> simdata1$tree, <span class="dt">userphyl =</span> simdata1$data, 
+                        <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="dt">rootprob =</span> <span class="st">&quot;equal&quot;</span>, 
+                        <span class="dt">modelmat =</span> <span class="st">&quot;ARD&quot;</span>)
+<span class="kw">print</span>(model1)</code></pre>
+<p>The second code block is using the “ARD” option for <em>modelmat</em> which automatically uses a two state substitution rate matrix here with two rates to be estimated. The output from printing <em>model1</em> (which is an object of class ‘markophylo’) is self-explanatory. The estimated rates (given as a array in <em>$rates</em>) and the standard errors (both indexed according to the parameter index matrix) are output. The log-likelihood at the maximum likelihood estimates along with the values of the model selection criteria (Akaike information criterion and Bayesian information criterion) are also provided. Because we did not specify <em>a priori</em> any clades to be fit with their own unique rates, these estimates are homogenous over the tree. This is also reflected in the one component list output under “Groups of nodes with the same rates”. Note that the <em>model1</em> object is of class <em>markophylo</em>.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">print</span>(<span class="kw">class</span>(model1))</code></pre>
 <pre><code>## [1] &quot;markophylo&quot;</code></pre>
 <p>Among other things, <em>model1</em> contains the number of unique patterns observed that can be retreived using <code>model1$w</code>. As expected, for binary discrete characters for four taxa, there are <code>2^4</code> unique patterns.</p>
@@ -219,8 +243,9 @@ ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span cla
 </tr>
 </tbody>
 </table>
-<div id="correcting-for-unobservable-patterns" class="section level4">
-<h4>Correcting for unobservable patterns</h4>
+</div>
+<div id="correcting-for-unobservable-patterns" class="section level3">
+<h3>Correcting for unobservable patterns</h3>
 <p>It is often very important to correct for sampling bias (aka acquisition or ascertainment bias). This could be important in many diverse scenarios and has been corrected for in many previous methodologies. For example, this correction has been used in the following cases:</p>
 <ul>
 <li>Analysis of restriction site data (Felsenstein, 1992).</li>
@@ -274,11 +299,12 @@ model1_f &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<sp
 ## 
 ## 
 ## 
-## Loglikelihood for model wop : -5546.87 
+## -----------------------------------
+## Log-likelihood for model wop : -5546.87 
 ## AIC           for model wop : -11097.74 
 ## BIC           for model wop : -11096.51 
 ## -----------------------------------
-## Time taken: 0.16 seconds.</code></pre>
+## Time taken: 0.117 seconds.</code></pre>
 <p>Clearly, there is a big difference as compared to the output from earlier. However, it is easy to correct for such sampling bias using the <em>estimaterates</em> function by providing a matrix with each row representing a unique unobservable pattern in the data. Here, a matrix with 2 rows, the first row all ones, and the second row all twos is supplied to the <em>unobserved</em> argument.</p>
 <pre class="sourceCode r"><code class="sourceCode r">model1_f_corrected &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> simdata1$tree, <span class="dt">userphyl =</span> filteredsimdata1, 
                                     <span class="dt">unobserved =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>), <span class="dt">nrow =</span> <span class="dv">2</span>, 
@@ -322,15 +348,16 @@ model1_f &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<sp
 ## 
 ## 
 ## 
-## Loglikelihood for model wop : -4712.739 
+## -----------------------------------
+## Log-likelihood for model wop : -4712.739 
 ## AIC           for model wop : -9429.478 
 ## BIC           for model wop : -9428.251 
 ## -----------------------------------
-## Time taken: 0.339 seconds.</code></pre>
+## Time taken: 0.143 seconds.</code></pre>
 </div>
 </div>
-<div id="illustration-2" class="section level2">
-<h2>Illustration 2</h2>
+<div id="illustration-2-branch-rate-heterogeneity" class="section level2">
+<h2>Illustration 2: branch rate heterogeneity</h2>
 <p>Here, a more complicated model is fit with certain clades following rates separate from the rest of the tree. While simulating the data found in <em>simdata2</em>, the clade with node 7 as its most recent common ancestor (MRCA) was constrained to have twice the substitution rates as the rest of the branches in the tree.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(simdata2)
 <span class="kw">print</span>(simdata2$Q)</code></pre>
@@ -344,12 +371,12 @@ model1_f &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<sp
 <p>While fitting the model, we hypothesize that the clade with node 7 as its most recent common ancestor (MRCA) follows substitution rates unique from the rest of the tree.</p>
 <pre class="sourceCode r"><code class="sourceCode r">model2 &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> simdata2$tree, <span class="dt">userphyl =</span> simdata2$data, 
                         <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="dt">bgtype =</span> <span class="st">&quot;ancestornodes&quot;</span>, <span class="dt">bg =</span> <span class="kw">c</span>(<span class="dv">7</span>),
-                        <span class="dt">rootprob =</span> <span class="st">&quot;equal&quot;</span>, <span class="dt">modelmat =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="ot">NA</span>), <span class="dv">2</span>, <span class="dv">2</span>))
+                        <span class="dt">rootprob =</span> <span class="st">&quot;equal&quot;</span>, <span class="dt">modelmat =</span> <span class="st">&quot;ARD&quot;</span>)
 <span class="kw">print</span>(model2)</code></pre>
 <pre><code>## Call:
 ## estimaterates(usertree = simdata2$tree, userphyl = simdata2$data, 
-##     alphabet = c(1, 2), modelmat = matrix(c(NA, 1, 2, NA), 2, 
-##         2), bgtype = &quot;ancestornodes&quot;, bg = c(7), rootprob = &quot;equal&quot;)
+##     alphabet = c(1, 2), modelmat = &quot;ARD&quot;, bgtype = &quot;ancestornodes&quot;, 
+##     bg = c(7), rootprob = &quot;equal&quot;)
 ## 
 ##  4 taxa with 5000 discrete character patterns were fitted.
 ## -----------------------------------
@@ -385,20 +412,76 @@ model1_f &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<sp
 ## 
 ## 
 ## 
-## Loglikelihood for model wop : -10893.48 
+## -----------------------------------
+## Log-likelihood for model wop : -10893.48 
 ## AIC           for model wop : -21794.97 
 ## BIC           for model wop : -21792.51 
 ## -----------------------------------
-## Time taken: 2.024 seconds.</code></pre>
-<p>In the output, groups of nodes that delimit the branches that follow the same rates (within groups) are displayed as two vector components of a list. The estimated rates then follow the ordering of these components. Generally, the output rates in the first column are the estimated rates (as indexed by the parameter index matrix) for the first group, the second column for the second group, and so on. To get a visual confirmation of the different branches following their own unique rates, the following command can be used:</p>
+## Time taken: 0.389 seconds.</code></pre>
+<p>This could also have been accomplished by providing a list with each component representing the node labels, i.e., group of branches, that follow the same rate(s). The node labels can be seen with</p>
+<pre class="sourceCode r"><code class="sourceCode r">ape::<span class="kw">plot.phylo</span>(simdata2$tree, <span class="dt">edge.width =</span> <span class="dv">2</span>, <span class="dt">show.tip.label =</span> <span class="ot">FALSE</span>, <span class="dt">no.margin =</span> <span class="ot">TRUE</span>)
+ape::<span class="kw">nodelabels</span>(<span class="dt">frame =</span> <span class="st">&quot;circle&quot;</span>, <span class="dt">cex =</span> <span class="fl">0.7</span>)
+ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span class="st">&quot;circle&quot;</span>, <span class="dt">cex =</span> <span class="fl">0.7</span>)</code></pre>
+<p><img src="data:image/png;base64,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" title alt style="display: block; margin: auto;" /> Now,</p>
+<pre class="sourceCode r"><code class="sourceCode r">model2_2 &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> simdata2$tree, <span class="dt">userphyl =</span> simdata2$data, 
+                        <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="dt">bgtype =</span> <span class="st">&quot;listofnodes&quot;</span>, <span class="dt">bg =</span> <span class="kw">list</span>(<span class="kw">c</span>(<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">7</span>),<span class="kw">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>)),
+                        <span class="dt">rootprob =</span> <span class="st">&quot;equal&quot;</span>, <span class="dt">modelmat =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="ot">NA</span>), <span class="dv">2</span>, <span class="dv">2</span>))
+<span class="kw">print</span>(model2_2)</code></pre>
+<pre><code>## Call:
+## estimaterates(usertree = simdata2$tree, userphyl = simdata2$data, 
+##     alphabet = c(1, 2), modelmat = matrix(c(NA, 1, 2, NA), 2, 
+##         2), bgtype = &quot;listofnodes&quot;, bg = list(c(3, 4, 7), c(1, 
+##         2, 5, 6, 7)), rootprob = &quot;equal&quot;)
+## 
+##  4 taxa with 5000 discrete character patterns were fitted.
+## -----------------------------------
+## Groups of nodes with the same rates:
+## [[1]]
+## [1] 3 4 7
+## 
+## [[2]]
+## [1] 1 2 5 6 7
+## 
+## -----------------------------------
+## Parameter Index Matrix
+##    1  2
+## 1 NA  2
+## 2  1 NA
+## -----------------------------------
+## wop 
+## $rates
+## , , 1
+## 
+##          [,1]      [,2]
+## [1,] 1.125722 0.5586981
+## [2,] 2.001023 1.0061918
+## 
+## 
+## $se
+## $se$rates
+## , , 1
+## 
+##           [,1]       [,2]
+## [1,] 0.0720312 0.02677063
+## [2,] 0.1055549 0.03522507
+## 
+## 
+## 
+## -----------------------------------
+## Log-likelihood for model wop : -10893.48 
+## AIC           for model wop : -21794.97 
+## BIC           for model wop : -21792.51 
+## -----------------------------------
+## Time taken: 0.317 seconds.</code></pre>
+<p>In the output, groups of nodes that delimit the branches that follow the same rates (within groups) are displayed as two vector components of an array. The estimated rates then follow the ordering of these components. Generally, the output rates in the first column are the estimated rates (as indexed by the parameter index matrix) for the first group, the second column for the second group, and so on. To get a visual confirmation of the different branches following their own unique rates, the following command can be used:</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plottree</span>(model2, <span class="dt">colors=</span><span class="kw">c</span>(<span class="st">&quot;blue&quot;</span>, <span class="st">&quot;darkgreen&quot;</span>), <span class="dt">edge.width =</span> <span class="dv">2</span>, <span class="dt">show.tip.label =</span> <span class="ot">FALSE</span>, 
          <span class="dt">no.margin =</span> <span class="ot">TRUE</span>)
 ape::<span class="kw">nodelabels</span>(<span class="dt">frame =</span> <span class="st">&quot;circle&quot;</span>, <span class="dt">cex =</span> <span class="fl">0.7</span>)
 ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span class="st">&quot;circle&quot;</span>, <span class="dt">cex =</span> <span class="fl">0.7</span>)</code></pre>
 <p><img src="data:image/png;base64,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" title alt style="display: block; margin: auto;" /></p>
 </div>
-<div id="illustration-3" class="section level2">
-<h2>Illustration 3</h2>
+<div id="illustration-3-partition-models." class="section level2">
+<h2>Illustration 3: partition models.</h2>
 <p>Here, a partition analysis is carried out. Nucleotide data was simulated such that the first half of sites followed substitution rates different from the other half of sites. Data was simulated in the two partitions with rates <span class="math">\(0.33\)</span> and <span class="math">\(0.99\)</span>. While specifying the model, a list of two components then needs to be supplied to the function. To specify the partition with the two matrices, <code>list(c(1:2500), c(2501:5000))</code> can be used. Note also that our alphabet here consists of the four nucleotide bases.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(simdata3)
 <span class="kw">print</span>(<span class="kw">dim</span>(simdata3$data))</code></pre>
@@ -410,14 +493,12 @@ ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span cla
 <pre class="sourceCode r"><code class="sourceCode r">model3 &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> simdata3$tree, <span class="dt">userphyl =</span> simdata3$data, 
                         <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;g&quot;</span>, <span class="st">&quot;t&quot;</span>), <span class="dt">rootprob =</span> <span class="st">&quot;equal&quot;</span>, 
                         <span class="dt">partition =</span> <span class="kw">list</span>(<span class="kw">c</span>(<span class="dv">1</span>:<span class="dv">2500</span>), <span class="kw">c</span>(<span class="dv">2501</span>:<span class="dv">5000</span>)), 
-                        <span class="dt">modelmat =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, 
-                                            <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>), <span class="dv">4</span>, <span class="dv">4</span>))
+                        <span class="dt">modelmat =</span> <span class="st">&quot;ER&quot;</span>)
 <span class="kw">print</span>(model3)</code></pre>
 <pre><code>## Call:
 ## estimaterates(usertree = simdata3$tree, userphyl = simdata3$data, 
-##     alphabet = c(&quot;a&quot;, &quot;c&quot;, &quot;g&quot;, &quot;t&quot;), modelmat = matrix(c(NA, 
-##         1, 1, 1, 1, NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA), 4, 4), 
-##     partition = list(c(1:2500), c(2501:5000)), rootprob = &quot;equal&quot;)
+##     alphabet = c(&quot;a&quot;, &quot;c&quot;, &quot;g&quot;, &quot;t&quot;), modelmat = &quot;ER&quot;, partition = list(c(1:2500), 
+##         c(2501:5000)), rootprob = &quot;equal&quot;)
 ## 
 ##  4 taxa with 5000 discrete character patterns were fitted.
 ## -----------------------------------
@@ -460,14 +541,15 @@ ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span cla
 ## 
 ## 
 ## 
-## Loglikelihood for model wop : -21659.38 
+## -----------------------------------
+## Log-likelihood for model wop : -21659.38 
 ## AIC           for model wop : -43322.75 
 ## BIC           for model wop : -43321.53 
 ## -----------------------------------
-## Time taken: 0.719 seconds.</code></pre>
+## Time taken: 0.481 seconds.</code></pre>
 </div>
-<div id="illustration-4" class="section level2">
-<h2>Illustration 4</h2>
+<div id="illustration-4-rate-variation-using-the-gamma-distribution-and-estimating-root-probabilities." class="section level2">
+<h2>Illustration 4: rate variation using the gamma distribution and estimating root probabilities.</h2>
 <p>Here, an analysis with gamma rate variation is carried out. Data was simulated using a gamma rate distribution with the shape parameter set to <span class="math">\(2\)</span>. The overall rate was <span class="math">\(0.33\)</span> while the prior root probabilities used for the simulation were <code>(0.15, 0.35, 0.25, 0.25)'</code>. While specifying the model, the “discgamma” option is used for the <em>ratevar</em> argument with 4 categories specified in <em>nocat</em>. This specifies a discrete gamma approximation that approximates the integral (that would be needed in the likelihood if the continuous gamma distribution was used) at each site by numerical integration. Moreover, instead of assuming equal or stationary root frequencies, or providing user-specified root probabilities, the root probabilities are estimated using maximum likelihood.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">data</span>(simdata4)
 <span class="kw">print</span>(<span class="kw">table</span>(simdata4$data))</code></pre>
@@ -475,7 +557,7 @@ ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span cla
 ##    a    c    g    t 
 ## 2929 7025 5007 5039</code></pre>
 <pre class="sourceCode r"><code class="sourceCode r">model4 &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> simdata4$tree, <span class="dt">userphyl =</span> simdata4$data, 
-                        <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;g&quot;</span>, <span class="st">&quot;t&quot;</span>), <span class="dt">rootprob =</span> <span class="st">&quot;maxlik&quot;</span>, 
+                        <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="st">&quot;a&quot;</span>, <span class="st">&quot;c&quot;</span>, <span class="st">&quot;g&quot;</span>, <span class="st">&quot;t&quot;</span>), <span class="dt">rootprob =</span> <span class="st">&quot;maxlik&quot;</span>,
                         <span class="dt">ratevar =</span> <span class="st">&quot;discgamma&quot;</span>, <span class="dt">nocat =</span> <span class="dv">4</span>, 
                         <span class="dt">modelmat =</span> <span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, 
                                             <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>), <span class="dv">4</span>, <span class="dv">4</span>))
@@ -533,13 +615,14 @@ ape::<span class="kw">tiplabels</span>(<span class="dt">frame =</span> <span cla
 ## [1] 0.005504226 0.008271888 0.007391624
 ## 
 ## 
-## Loglikelihood for model wop : -17763.33 
+## -----------------------------------
+## Log-likelihood for model wop : -17763.33 
 ## AIC           for model wop : -35536.65 
 ## BIC           for model wop : -35533.58 
 ## -----------------------------------
-## Time taken: 3.122 seconds.</code></pre>
-<div id="correcting-for-unobservable-patterns-1" class="section level4">
-<h4>Correcting for unobservable patterns</h4>
+## Time taken: 3.312 seconds.</code></pre>
+<div id="correcting-for-unobservable-patterns-1" class="section level3">
+<h3>Correcting for unobservable patterns</h3>
 <p>Here, let’s see what happens if we estimate the rates of interest on a filtered version of the data used above in Illustration 4. First, the data is filtered to remove all patterns where only “a” was recorded or “g” was recorded more than three times (i.e., three or four times). Note that this arbitrary filtering is done simply to illustrate the ease of adjusting for unobservable data patterns.</p>
 <pre class="sourceCode r"><code class="sourceCode r">filteralla &lt;-<span class="st"> </span><span class="kw">which</span>(<span class="kw">apply</span>(simdata4$data, <span class="dt">MARGIN =</span> <span class="dv">1</span>, <span class="dt">FUN =</span> 
                             function(x) <span class="kw">isTRUE</span>(<span class="kw">all.equal</span>(<span class="kw">as.vector</span>(x), 
@@ -621,15 +704,16 @@ unob_patt &lt;-<span class="st"> </span>allpatt[unob_patt_indices, ] <span class
 ## [1] 0.01029943 0.01671436 0.02612932
 ## 
 ## 
-## Loglikelihood for model wop : -12267.8 
+## -----------------------------------
+## Log-likelihood for model wop : -12267.8 
 ## AIC           for model wop : -24545.6 
 ## BIC           for model wop : -24542.53 
 ## -----------------------------------
-## Time taken: 3.989 seconds.</code></pre>
+## Time taken: 2.479 seconds.</code></pre>
 </div>
 </div>
-<div id="illustration-5" class="section level2">
-<h2>Illustration 5</h2>
+<div id="illustration-5-partition-models-with-separate-rate-variation-in-each-partition." class="section level2">
+<h2>Illustration 5: partition models with separate rate variation in each partition.</h2>
 <p>Here, simulated data akin to codon data is analyzed. The data can be organized into triplets, with the first two positions following the same substitution rates different from the third position. The data was simulated under the assumption of gamma rate variation with the shape parameters set to <span class="math">\(2\)</span> and <span class="math">\(0.75\)</span> for the set of first two positions and last position, respectively. The overall rate was <span class="math">\(0.33\)</span>. The ancestral sequence had the following character frequencies: <code>(0.15, 0.35, 0.25, 0.25)'</code>. If a common gamma distribution over partitions is assumed, “discgamma” should be supplied as the value for argument <em>ratevar</em>. Here, for the model to be fit, a different gamma rate distribution is assumed in each partition using “partitionspecificgamma” as the value for argument <em>ratevar</em>. Hence, a list of two components needs to be specified for argument <em>partition</em>. This can easily be done, for example, the following can be used to specify partitions for <span class="math">\(15\)</span> sites in total with the first (second) component being a vector of the first two (last) positions of triplets.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">list</span>((<span class="dv">1</span>:<span class="dv">15</span>)[-<span class="kw">seq</span>(<span class="dv">3</span>, <span class="dv">15</span>, <span class="dt">by =</span> <span class="dv">3</span>)], <span class="kw">seq</span>(<span class="dv">3</span>, <span class="dv">15</span>, <span class="dt">by =</span> <span class="dv">3</span>) )</code></pre>
 <pre><code>## [[1]]
@@ -719,15 +803,196 @@ unob_patt &lt;-<span class="st"> </span>allpatt[unob_patt_indices, ] <span class
 ## [1] 0.005096065 0.007472417 0.006748046
 ## 
 ## 
-## Loglikelihood for model wop : -20718.19 
+## -----------------------------------
+## Log-likelihood for model wop : -20718.19 
 ## AIC           for model wop : -41450.38 
 ## BIC           for model wop : -41446.08 
 ## -----------------------------------
-## Time taken: 12.775 seconds.</code></pre>
+## Time taken: 9.86 seconds.</code></pre>
 </div>
-<div id="creating-modelmat" class="section level2">
-<h2>Creating <em>modelmat</em></h2>
-<p>Any arbitrary square matrix can be supplied to the function <em>estimaterates</em> where the zero entries denote substitutions that are not permitted, and the unique non-zero integer entries denote the rates that must be estimated.</p>
+<div id="illustration-6-importing-data-and-fitting-a-birth-death-model." class="section level2">
+<h2>Illustration 6: importing data and fitting a birth death model.</h2>
+<p>Import some simulated data and tree from the web. There are 5000 discrete character patterns (four states in total: 1, 2, 3, and 4) for ten taxa. The data was simulated using a birth death model with rates 1 and 2 and equal base frequencies.</p>
+<pre class="sourceCode r"><code class="sourceCode r">mp_data &lt;-<span class="st"> </span><span class="kw">read.table</span>(<span class="st">&quot;http://info.mcmaster.ca/~udang/mp_example_data&quot;</span>, <span class="dt">header =</span> <span class="ot">TRUE</span>)
+mp_tree &lt;-<span class="st"> </span>ape::<span class="kw">read.tree</span>(<span class="st">&quot;http://info.mcmaster.ca/~udang/mp_example_tree&quot;</span>)
+mp_model &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> mp_tree, <span class="dt">userphyl =</span> mp_data,
+                        <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>), <span class="dt">rootprob =</span> <span class="st">&quot;equal&quot;</span>,
+                        <span class="dt">modelmat =</span> <span class="st">&quot;BD&quot;</span>)
+<span class="kw">print</span>(mp_model)</code></pre>
+<pre><code>## Call:
+## estimaterates(usertree = mp_tree, userphyl = mp_data, alphabet = c(1, 
+##     2, 3, 4), modelmat = &quot;BD&quot;, rootprob = &quot;equal&quot;)
+## 
+##  10 taxa with 5000 discrete character patterns were fitted.
+## -----------------------------------
+## Groups of nodes with the same rates:
+## [[1]]
+##  [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
+## 
+## -----------------------------------
+## Parameter Index Matrix
+##    1  2  3  4
+## 1 NA  2  0  0
+## 2  1 NA  2  0
+## 3  0  1 NA  2
+## 4  0  0  1 NA
+## -----------------------------------
+## wop 
+## $rates
+## , , 1
+## 
+##           [,1]
+## [1,] 0.9783828
+## [2,] 1.9718725
+## 
+## 
+## $se
+## $se$rates
+## , , 1
+## 
+##            [,1]
+## [1,] 0.01490773
+## [2,] 0.02186666
+## 
+## 
+## 
+## -----------------------------------
+## Log-likelihood for model wop : -50200.1 
+## AIC           for model wop : -100404.2 
+## BIC           for model wop : -100404.8 
+## -----------------------------------
+## Time taken: 6.03 seconds.</code></pre>
+<p>Of course, we could also have estimated the root probabilities easily as seen before.</p>
+<pre class="sourceCode r"><code class="sourceCode r">mp_model_2 &lt;-<span class="st"> </span><span class="kw">estimaterates</span>(<span class="dt">usertree =</span> mp_tree, <span class="dt">userphyl =</span> mp_data,
+                        <span class="dt">alphabet =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>), <span class="dt">rootprob =</span> <span class="st">&quot;maxlik&quot;</span>,
+                        <span class="dt">modelmat =</span> <span class="st">&quot;BD&quot;</span>)
+<span class="kw">print</span>(mp_model_2)</code></pre>
+<pre><code>## Call:
+## estimaterates(usertree = mp_tree, userphyl = mp_data, alphabet = c(1, 
+##     2, 3, 4), modelmat = &quot;BD&quot;, rootprob = &quot;maxlik&quot;)
+## 
+##  10 taxa with 5000 discrete character patterns were fitted.
+## -----------------------------------
+## Groups of nodes with the same rates:
+## [[1]]
+##  [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19
+## 
+## -----------------------------------
+## Parameter Index Matrix
+##    1  2  3  4
+## 1 NA  2  0  0
+## 2  1 NA  2  0
+## 3  0  1 NA  2
+## 4  0  0  1 NA
+## -----------------------------------
+## wop 
+## $rates
+## , , 1
+## 
+##           [,1]
+## [1,] 0.9781721
+## [2,] 1.9719934
+## 
+## 
+## $iroot
+## [1] 0.2505434 0.2460203 0.2543784 0.2490579
+## 
+## $se
+## $se$rates
+## , , 1
+## 
+##            [,1]
+## [1,] 0.01512815
+## [2,] 0.02227085
+## 
+## 
+## $se$iroot
+## [1] 0.007569593 0.008733650 0.008763025
+## 
+## 
+## -----------------------------------
+## Log-likelihood for model wop : -50199.94 
+## AIC           for model wop : -100409.9 
+## BIC           for model wop : -100411.4 
+## -----------------------------------
+## Time taken: 19.24 seconds.</code></pre>
+<p>Notice the slightly better log-likelihood (at the MLEs) value for the latter model. However, in this case, both the BIC and the AIC (higher is better here) indicate that the former model is the better fitting (more parsimonious) model.</p>
+</div>
+<div id="specifying-modelmat" class="section level2">
+<h2>Specifying <em>modelmat</em></h2>
+<p>Can be one of two options: pre-built or user-specified. For the pre-built matrices, a four state matrix is used for the following examples. The dimensionality of the matrix is automatically inferred from the alphabet option.</p>
+<ul>
+<li>“ER” for an equal rates matrix, e.g.,</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="ot">NA</span>
+), <span class="dt">nrow =</span> <span class="dv">4</span>, <span class="dt">ncol =</span> <span class="dv">4</span>)</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4]
+## [1,]   NA    1    1    1
+## [2,]    1   NA    1    1
+## [3,]    1    1   NA    1
+## [4,]    1    1    1   NA</code></pre>
+<ul>
+<li>“SYM” for a symmetric matrix, e.g.,</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="ot">NA</span>, <span class="dv">6</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="ot">NA</span>
+), <span class="dv">4</span>,<span class="dv">4</span>)</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4]
+## [1,]   NA    1    2    3
+## [2,]    1   NA    4    5
+## [3,]    2    4   NA    6
+## [4,]    3    5    6   NA</code></pre>
+<ul>
+<li>“ARD” for an all rates different matrix, e.g.,</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="ot">NA</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="ot">NA</span>, <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>, <span class="dv">12</span>, 
+<span class="ot">NA</span>), <span class="dv">4</span>, <span class="dv">4</span>)</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4]
+## [1,]   NA    4    7   10
+## [2,]    1   NA    8   11
+## [3,]    2    5   NA   12
+## [4,]    3    6    9   NA</code></pre>
+<ul>
+<li>“GTR” for a general time reversible model. This sets reversible to be TRUE, rootprob to be “maxlik”, and the rate matrix supplied to the function is symmetric. The estimated rate matrix can be written as the product of a symmetric matrix multiplied by a diagonal matrix (consisting of the likelihood estimated root probabilities).</li>
+<li>“BD” for a standard birth death matrix, e.g.,</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="ot">NA</span>
+), <span class="dv">4</span>, <span class="dv">4</span>)</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4]
+## [1,]   NA    2    0    0
+## [2,]    1   NA    2    0
+## [3,]    0    1   NA    2
+## [4,]    0    0    1   NA</code></pre>
+<ul>
+<li>“BDER” for a standard birth death matrix, e.g.,</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="ot">NA</span>
+), <span class="dv">4</span>, <span class="dv">4</span>)</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4]
+## [1,]   NA    1    0    0
+## [2,]    1   NA    1    0
+## [3,]    0    1   NA    1
+## [4,]    0    0    1   NA</code></pre>
+<ul>
+<li>“BDSYM” for a standard birth death matrix, e.g.,</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="ot">NA</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">2</span>, <span class="ot">NA</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">3</span>, <span class="ot">NA</span>
+), <span class="dv">4</span>, <span class="dv">4</span>)</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4]
+## [1,]   NA    1    0    0
+## [2,]    1   NA    2    0
+## [3,]    0    2   NA    3
+## [4,]    0    0    3   NA</code></pre>
+<ul>
+<li>“BDARD” for an all rates different birth death matrix, e.g.,</li>
+</ul>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">4</span>, <span class="ot">NA</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">5</span>, <span class="ot">NA</span>, <span class="dv">3</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">6</span>, <span class="ot">NA</span>
+), <span class="dv">4</span>, <span class="dv">4</span>)</code></pre>
+<pre><code>##      [,1] [,2] [,3] [,4]
+## [1,]   NA    4    0    0
+## [2,]    1   NA    5    0
+## [3,]    0    2   NA    6
+## [4,]    0    0    3   NA</code></pre>
+<p>A square matrix can also be input that consists of integer values denoting the indices of the substitution rates to be estimated. Any arbitrary square matrix can be supplied where the zero entries denote substitutions that are not permitted, and the unique non-zero integer entries denote the rates that must be estimated.</p>
 <p>In the following example inspired by gene copy loss, genes are lost (going from 1 copy to none, or 2 copies to 1) at the same instantaneous rate characterized by the index 1. On the other hand, losing both copies instantaneously is characterized by its own separate rate indexed by 2. Note that gene gain is not allowed here in this hypothetical example.</p>
 <pre class="sourceCode r"><code class="sourceCode r">m &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="kw">c</span>(<span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="ot">NA</span>, <span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="ot">NA</span>), <span class="dv">3</span>, <span class="dv">3</span>)
 <span class="kw">rownames</span>(m) &lt;-<span class="st"> </span><span class="kw">colnames</span>(m) &lt;-<span class="st"> </span><span class="kw">c</span>(<span class="st">&quot;Absent&quot;</span>, <span class="st">&quot;1 copy&quot;</span>, <span class="st">&quot;2 copies&quot;</span>)
@@ -736,17 +1001,18 @@ unob_patt &lt;-<span class="st"> </span>allpatt[unob_patt_indices, ] <span class
 ## Absent       NA      0        0
 ## 1 copy        1     NA        0
 ## 2 copies      2      1       NA</code></pre>
-<p>Birth-death matrices can also be easily supplied. In the following, a transition from character state 2 (row) to character state 1 (column) happens at a unique instantaneous rate (the death rate) denoted by the matrix entry 1. Similarly, the transition from character states 3 to 2, 4 to 3, or 5 to 4 are all characterized by the same instantaneous rate. Similarly, a transition from character state 1 to character state 2 (or 2 to 3, or 3 to 4, or 4 to 5) happens at a unique instantaneous rate (the birth rate).</p>
+<p>Birth-death matrices can also be easily supplied by using the modelmat options (“BD”,“BDER”,“BDSYM”, and “BDARD”) discussed above. However, they are also easily built. In the following, a transition from character state 2 (row) to character state 1 (column) happens at a unique instantaneous rate (the death rate) denoted by the matrix entry 1. Similarly, the transition from character states 3 to 2, 4 to 3, or 5 to 4 are all characterized by the same instantaneous rate. Similarly, a transition from character state 1 to character state 2 (or 2 to 3, or 3 to 4, or 4 to 5) happens at a unique instantaneous rate (the birth rate).</p>
 <pre class="sourceCode r"><code class="sourceCode r">m &lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="dv">0</span>, <span class="dv">5</span>, <span class="dv">5</span>)
+<span class="kw">diag</span>(m) &lt;-<span class="st"> </span><span class="ot">NA</span>
 <span class="kw">diag</span>(m[-<span class="dv">1</span>, ]) &lt;-<span class="st"> </span><span class="dv">1</span>
 <span class="kw">diag</span>(m[, -<span class="dv">1</span>]) &lt;-<span class="st"> </span><span class="dv">2</span>
 <span class="kw">print</span>(m)</code></pre>
 <pre><code>##      [,1] [,2] [,3] [,4] [,5]
-## [1,]    0    2    0    0    0
-## [2,]    1    0    2    0    0
-## [3,]    0    1    0    2    0
-## [4,]    0    0    1    0    2
-## [5,]    0    0    0    1    0</code></pre>
+## [1,]   NA    2    0    0    0
+## [2,]    1   NA    2    0    0
+## [3,]    0    1   NA    2    0
+## [4,]    0    0    1   NA    2
+## [5,]    0    0    0    1   NA</code></pre>
 <p>References:</p>
 <ul>
 <li>Felsenstein, J. (1992). Phylogenies from restriction sites: A maximum-likelihood approach. <em>Evolution</em>, 159–173.</li>

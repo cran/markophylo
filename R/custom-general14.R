@@ -15,7 +15,15 @@ print.markophylo <- function(x, ...) {
     cat(i, "\n")
     if (x$results[[i]]$convergence == 0) {
       print.default(x$results[[i]]$parsep)
-      cat("Loglikelihood for model", i, ":", -x$results[[i]]$objective, "\n")
+      cat("-----------------------------------\n")
+      if(x$reversible) {
+        cat("Reversible option used. The root probabilities are estimated using maximum likelihood (see above for estimates and standard errors), and the rate matrix supplied to the function is symmetric (see above for estimates and standard errors). The estimated rate matrix can be written as the product of the symmetric matrix multiplied by a diagonal matrix (consisting of the estimated root probabilities). These rate estimates are:\n")
+        mm_al2 <- x$results[[i]]$modelmat2
+        rownames(mm_al2) <- colnames(mm_al2) <- x$alphabet
+        print(mm_al2)
+        print.default(x$results[[i]]$revcombined)
+      }
+      cat("Log-likelihood for model", i, ":", -x$results[[i]]$objective, "\n")
       cat("AIC           for model", i, ":", x$results[[i]]$AIC, "\n")
       cat("BIC           for model", i, ":", x$results[[i]]$BIC, "\n")
       cat("-----------------------------------\n")
@@ -38,20 +46,42 @@ plottree <- function(x, colors = NULL, ...) {
   ape::plot.phylo(x$tree, edge.color = colors[colo], ...)
 }
 
-estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FALSE, unobserved = NULL, alphabet = NULL, modelmat = NULL, bgtype = "listofnodes", bg = NULL, partition = NULL, ratevar = FALSE, nocat = 4, numhessian = TRUE,  rootprob = NULL, rpvec = NULL, ...) {
+estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FALSE, unobserved = NULL, alphabet = NULL, modelmat = NULL, bgtype = "listofnodes", bg = NULL, partition = NULL, ratevar = FALSE, nocat = 4, reversible = FALSE, numhessian = TRUE,  rootprob = NULL, rpvec = NULL, lowli = 0.001, upli = 100, ...) {
   ptm <- proc.time()
+  if(ratevar!=FALSE) ratevar <- match.arg(ratevar,c("discgamma","partitionspecificgamma"))
+  bgtype <- match.arg(bgtype, c("listofnodes", "ancestornodes"))
+  if(!is.null(rootprob)) rootprob <- match.arg(rootprob, c("equal", "stationary", "maxlik", "user"))
+  if(is.character(modelmat)) modelmat <- match.arg(modelmat, c("ER","SYM","ARD","GTR","BD","BDER","BDSYM","BDARD"))
   if (is.null(usertree)) 
     stop("usertree option is required.")
-  if (is.null(userphyl) | !is.matrix(userphyl)) 
-    stop("userphyl option is required in a matrix format.")
+  if (is.null(userphyl) | !(is.matrix(userphyl) | is.data.frame(userphyl))) 
+    stop("userphyl option is required.")
+  if (!is.null(unobserved) & !is.matrix(userphyl)) 
+    stop("unobserved should be a matrix.")
+  if(bgtype=="listofnodes" & !is.null(bg) & !is.list(bg))
+    stop("bg should be a vector with listofnodes argument.")
+  if(bgtype=="ancestornodes" & !is.null(bg) & !is.vector(bg))
+    stop("bg should be a list with ancestornodes argument.")
   if (is.null(alphabet)) 
     stop("alphabet option is required.")
   if (is.null(modelmat)) 
     stop("modelmat option is required.")
   if (is.null(rootprob)) 
-    stop("modelmat option is required.")
+    stop("rootprob option is required.")
   if (!is.null(partition) & !is.list(partition)) 
     stop("partition option must be a list.")
+  if (ratevar == "partitionspecificgamma" & is.null(partition)) 
+    stop("partition option must be specified and must be a list.")
+  if(!is.character(modelmat)) {
+    if(nrow(modelmat)!=ncol(modelmat))
+      stop("A square matrix should be provided for the modelmat option.")
+    if(nrow(modelmat)!=length(alphabet))
+      stop("Length of alphabet supplied does not equal the number of states in the supplied rate matrix.")
+  }
+  if(length(table(as.matrix(userphyl)))!=length(alphabet))
+    stop("Number of discrete states in the data provided does not equal the state space specified in the alphabet option.")
+  if(nrow(userphyl) < ncol(userphyl))
+    warning("More taxa than patterns detected. Note that rows should represent the discrete character patterns and columns the different taxa. If this format was used, you can safely ignore this message.")
   #############Libraries###################
   libload <- function(funcval) {
     if (requireNamespace(paste(funcval), quietly = TRUE) == FALSE) 
@@ -62,30 +92,122 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   libload("stringr")
   libload("numDeriv")
   libload("Rcpp")
+  #########Build substitution rate index matrix#####################
+  buildindexmat <- function(type=modelmat,states=length(alphabet)){
+    if(type=="ER"){
+      #equal rates matrix
+      modelm <- matrix(1,states,states)
+      diag(modelm) <- NA
+    }
+    if(type=="ARD"){
+      #all rates different matrix
+      modelm <- matrix(0,states,states)
+      diag(modelm) <- NA
+      modelm[!is.na(modelm)] <- 1:(states*(states-1))
+    }
+    if(type=="SYM"){
+      #symmetric matrix
+      modelm <- matrix(0,states,states)
+      diag(modelm) <- NA
+      modelm[lower.tri(modelm)] <- 1:(states*(states-1)/2)
+      modelm <- modelm + t(modelm)
+    }
+    if(type=="GTR"){
+      #symmetric matrix
+      modelm <- matrix(0,states,states)
+      diag(modelm) <- NA
+      modelm[lower.tri(modelm)] <- 1:(states*(states-1)/2)
+      modelm <- modelm + t(modelm)
+    }
+    if(type=="BD"){
+      #birth death matrix
+      modelm <- matrix(0,states,states)
+      diag(modelm) <- NA
+      if(states > 2) {
+        diag(modelm[-1, ]) <- 1
+        diag(modelm[, -1]) <- 2
+      } 
+      if(states == 2){
+        modelm[2,1] <- 1
+        modelm[1,2] <- 2
+      }
+    }
+    if(type=="BDER"){
+      #birth death equal rates matrix
+      modelm <- matrix(0,states,states)
+      diag(modelm) <- NA
+      if(states > 2) {
+        diag(modelm[-1, ]) <- 1
+        diag(modelm[, -1]) <- 1
+      }
+      if(states == 2) {
+        modelm[2,1] <- modelm[2,1] <- 1
+      }
+    }
+    if(type=="BDARD"){
+      #birth death all rates different
+      modelm <- matrix(0,states,states)
+      diag(modelm) <- NA
+      if(states > 2){
+        diag(modelm[-1, ]) <- 1:(states-1)
+        diag(modelm[, -1]) <- (states):((states-1)*2)
+      }
+      if(states == 2){
+        modelm[2,1] <- 1
+        modelm[1,2] <- 2
+      }
+    }
+    if(type=="BDSYM"){
+      #birth death symmetric
+      modelm <- matrix(0,states,states)
+      diag(modelm) <- NA
+      if(states > 2) {
+        diag(modelm[-1, ]) <- 1:(states-1)
+        modelm <- modelm + t(modelm)
+      } 
+      if(states == 2){
+        modelm[2,1] <- modelm[2,1] <- 1
+      }
+    }
+    return(modelm)
+  }
+  if(is.character(modelmat)) {
+    if(modelmat=="GTR") {
+      reversible <- TRUE
+      rootprob <- "maxlik"
+    }
+  }
+  if(is.character(modelmat)) modelmat <- buildindexmat()
   #########Transition rate matrix and substitution rate matrix#######
-  TPM_taxa <- function(rates, ad, ti) {
+  TPM_taxa <- function(rates, ad, ti, rpin) {
     j <- unlist(lapply(lapply(bg, FUN = function(X) c(ad[1], ad[2]) %in% X), FUN = "all"), use.names = FALSE)
     for (gf in 1:length(rates[, j])) {
       Q[modelmat == gf] <- rates[gf, j]
     }
+    if(reversible & rootprob=="maxlik") Q <- sweep(Q, MARGIN = 2, FUN = "*", rpin, check.margin = FALSE)
     diag(Q) <- -.rowSums(Q, m = al, n = al, na.rm = TRUE)
     return(expm(Q * ti))
   }
   ###########Data Import#########
-  if (ape::is.binary.tree(usertree) == FALSE | ape::is.rooted(usertree) == FALSE) {
+  if (!ape::is.binary.tree(usertree) | !ape::is.rooted(usertree)) {
     usertree <- ape::multi2di(usertree)
     cat("Tree either not binary or not rooted.", "\n", "Transformed using multi2di from packege ape.", "\n")
     cat("Labels of nodes of interest might change.\n")
   }
   tree1 <- usertree
   tree1 <- ape::reorder.phylo(tree1, order = "postorder")
+  
+  if(is.data.frame(userphyl)) userphyl <- as.matrix(userphyl)
+  diag(modelmat) <- NA
+  if(reversible & !isSymmetric(modelmat)) stop("modelmat should be symmetric to use with the reversible option.")
+  if(reversible & rootprob!="maxlik") stop("Root probabilities must be estimated using likelihood to use with the reversible option. Use maxlik option for rootprob.")
+  
   if(matchtipstodata) {
     fin <- userphyl[,pmatch(usertree$tip.label, colnames(userphyl))] 
     datab <- t(fin)
   } else {
     datab <- t(userphyl)
   }
-  #datab <- t(fin)
   phyl <- ncol(datab)
   nooftaxa <- length(tree1$tip.label)
   al <- length(alphabet)
@@ -117,11 +239,6 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   nointnodes <- nooftaxa - 1
   tips <- 1:nooftaxa
   len_tips <- length(tips)
-  #check.equal <- function(x, y) {
-  #  isTRUE(all.equal(y, x, check.attributes = FALSE))
-  #}
-  #zeroentr <- which(apply(datab, 2, check.equal, y = rep(0, nooftaxa)))
-  #ifelse(1 > 2, databp <- datab[, -zeroentr], databp <- datab) #for zerocorrection. rejected for the moment.
   databp <- datab
   csp <- length(bg) #how many different clade-specific parameters
   if (!is.null(partition)) {
@@ -138,16 +255,11 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     ww <- unname(cbind(b, wfn))
     if (is.character(dataforp[1, 1])) {
       databp_red1 <- na.omit(unlist(stringr::str_split(ww[, 1], "")))
-      if(compareVersion(paste(packageVersion("stringr") ), '1.0.0') < 0) {
-        databp_red1 <- databp_red1[-which(databp_red1 == "")]
-      }
     } else {
       databp_red1 <- na.omit(as.numeric(unlist(stringr::str_split(ww[, 1], ""))))
     }
     databpr <- matrix(databp_red1, ncol = nooftaxa, byrow = T)
-    #     databpr <- rbind(databpr, rep(0, nooftaxa))
     colnames(databpr) <- colnames(userphyl)
-    #     wfn <- c(wfn, 1) #Count for no gene correction...
     return(list(w = wfn, databp_red = databpr))
   }
   w <- list()
@@ -348,30 +460,27 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   totalll <- function(previtval, model, rtype = "estimates", ...) {
     ptbrun <- bamsp(previtval, model)
     ptb_loc <- ptbrun$rates
+    rtype <- rtype
+    rootp <- rootpfun(rootprob, rtype, currpar = ptbrun)
     if (ratevar == "partitionspecificgamma") {
       for (k in 1:psp) {
         if (le_npar_mmat == 1) {
-          pm[[k]] <- lapply(X = 1:nocat, FUN = function(j) lapply(1:nrow(F), function(i) TPM_taxa(t(as.matrix(ptb_loc[, , k])), ad = F[i, 
-                                                                                                                                       1:2], ti = F[i, 3] * ptbrun$alpharates[k, j])))
+          pm[[k]] <- lapply(X = 1:nocat, FUN = function(j) lapply(1:nrow(F), function(i) TPM_taxa(t(as.matrix(ptb_loc[, , k])), ad = F[i, 1:2], ti = F[i, 3] * ptbrun$alpharates[k, j], rootp[[k]])))
         } else {
-          pm[[k]] <- lapply(X = 1:nocat, FUN = function(j) lapply(1:nrow(F), function(i) TPM_taxa(as.matrix(ptb_loc[, , k]), ad = F[i, 
-                                                                                                                                    1:2], ti = F[i, 3] * ptbrun$alpharates[k, j])))
+          pm[[k]] <- lapply(X = 1:nocat, FUN = function(j) lapply(1:nrow(F), function(i) TPM_taxa(as.matrix(ptb_loc[, , k]), ad = F[i, 1:2], ti = F[i, 3] * ptbrun$alpharates[k, j], rootp[[k]])))
         }
       }
     } else {
       for (k in 1:psp) {
         if (le_npar_mmat == 1) {
-          pm[[k]] <- lapply(X = 1:nocat, FUN = function(j) lapply(1:nrow(F), function(i) TPM_taxa(t(as.matrix(ptb_loc[, , k])), ad = F[i, 
-                                                                                                                                       1:2], ti = F[i, 3] * ptbrun$alpharates[1, j])))
+          pm[[k]] <- lapply(X = 1:nocat, FUN = function(j) lapply(1:nrow(F), function(i) TPM_taxa(t(as.matrix(ptb_loc[, , k])), ad = F[i, 1:2], ti = F[i, 3] * ptbrun$alpharates[1, j], rootp[[k]])))
         } else {
-          pm[[k]] <- lapply(X = 1:nocat, FUN = function(j) lapply(1:nrow(F), function(i) TPM_taxa(as.matrix(ptb_loc[, , k]), ad = F[i, 
-                                                                                                                                    1:2], ti = F[i, 3] * ptbrun$alpharates[1, j])))
+          pm[[k]] <- lapply(X = 1:nocat, FUN = function(j) lapply(1:nrow(F), function(i) TPM_taxa(as.matrix(ptb_loc[, , k]), ad = F[i, 1:2], ti = F[i, 3] * ptbrun$alpharates[1, j], rootp[[k]])))
         }
       }
     }
     # pm is a list with the first component referring to the partitions, the second to the discrete gamma categories, and the third to the edge lengths.
-    rtype <- rtype
-    rootp <- rootpfun(rootprob, rtype, currpar = ptbrun)
+
     phy <- unlist_w * unlist(lapply(X = 1:psp, FUN = function(i) ll(model, pm[[i]], rootp = rootp[[i]], Lixi_in_ll = Lixi_init[[i]])), use.names = FALSE)
     if (!is.null(unobserved) & is.null(partition)){
       corr <- unlist(lapply(X = 1:psp, FUN = function(i) ll(model, pm[[i]], rootp = rootp[[i]], Lixi_in_ll = Lixi_corr_init)), use.names = FALSE)
@@ -402,6 +511,7 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
       if (rtype == "estimates") {
         return(rep(list(pweights(comp = al, repar = irootprob)), psp))
       } else {
+        # i.e. rtype == "se"
         return(rep(list(c(irootprob, (1 - sum(irootprob)))), psp))
       }
     } else if (rootprob == "stationary") {
@@ -423,8 +533,6 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   indelinit <- 0.9
   ################Estimation################
   alphastart = 0.5
-  lowli = 0.001
-  upli = 100
   options(digits = 7)
   if (rootprob == "maxlik" & ratevar == FALSE) {
     modelop <- list(wop = list(start = c(rep(indelinit, (csp * psp * le_npar_mmat)), rep(0, al - 1)), df = 1 * csp * psp * le_npar_mmat + 
@@ -454,21 +562,40 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   sevec <- NULL
   convcheck <- NULL
   modelnames <- "wop"
+  modelmat2 <- NA
+  revcombined <- NA
   for (i in modelnames) {
     le_prev <- length(modelop[[i]]$start)
     res <- nlminb(start = modelop[[i]]$start, objective = totalll, model = i, lower = modelop[[i]]$lower, upper = modelop[[i]]$upper, 
                   rtype = "estimates", ...)
     if (rootprob == "maxlik") {
       tempres <- res$par
-      tempres[(length(tempres) - al + 2):length(tempres)] <- pweights(comp = al, repar = res$par[(length(res$par) - al + 2):length(res$par)])[1:(al - 
-                                                                                                                                                   1)]
+      tempres[(length(tempres) - al + 2):length(tempres)] <- pweights(comp = al, repar = res$par[(length(res$par) - al + 2):length(res$par)])[1:(al - 1)]
       if (numhessian) 
-        res$hessian <- numDeriv::hessian(func = totalll, model = i, x = tempres, rtype = "se")
+        suppressWarnings(res$hessian <- numDeriv::hessian(func = totalll, model = i, x = tempres, rtype = "se"))
     } else {
       if (numhessian) 
         res$hessian <- numDeriv::hessian(func = totalll, model = i, x = res$par)
     }
     res$parsep <- bamspforresult(res$par, i, partype = "par")
+    res$revcombined$rates <- array(data = NA, dim =c(sum(!is.na(modelmat) & modelmat!=0), csp, psp))
+    if(reversible) {
+      Q_out <- modelmat
+      modelmat2 <- modelmat
+      modelmat2[modelmat2!=0 & !is.na(modelmat2)] <- 1:(sum(!is.na(modelmat) & modelmat!=0))
+      for(pa in 1:psp){
+        for(ca in 1:csp){
+          for (gf in 1:length(res$parsep$rates[,ca,pa])) {
+            Q_out[modelmat == gf] <- res$parsep$rates[,ca,pa][gf]
+          }
+              Q_out <- sweep(Q_out, MARGIN = 2, FUN = "*", res$parsep$iroot, check.margin = FALSE) 
+              #iroot is never a list because only ever used with "maxlik", never "stationary". 
+              #the sweep method is ideal. However, because we are only indexing !is.na items, the multiplication by the diagonal matrix comprising the root probabilities method might also work...
+          res$revcombined$rates[,ca,pa] <- Q_out[which(!is.na(modelmat2) & modelmat2!=0)]
+        }
+      }
+      res$modelmat2 <- modelmat2
+    }
     res$df <- modelop[[i]]$df
     convcheck <- c(convcheck, res$convergence)
     if (res$convergence == 0) {
@@ -491,9 +618,7 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     cat("Something is not right with the standard errors. Check Hessian matrix estimate.")
   
   timetaken <- proc.time() - ptm
-  val <- list(call = match.call(), conv = convcheck, time = timetaken, bgtype = bgtype, bg = bg, results = results, tree = tree1, data_red = databp_red, alphabet = alphabet, 
-              w = w, taxa = nooftaxa, phyl = ncol(databp), rootprob = rootprob, 
-              modelmat = modelmat, modelnames=modelnames)
+  val <- list(call = match.call(), conv = convcheck, time = timetaken, bgtype = bgtype, bg = bg, results = results, tree = tree1, data_red = databp_red, alphabet = alphabet, reversible = reversible,  w = w, taxa = nooftaxa, phyl = ncol(databp), rootprob = rootprob, modelmat = modelmat, modelnames=modelnames)
   class(val) <- "markophylo"
   return(invisible(val))
 }
