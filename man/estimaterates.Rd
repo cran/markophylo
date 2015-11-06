@@ -22,7 +22,7 @@ Rooted binary tree of class "phylo". Read in Newick tree using read.tree() from 
 A matrix or data frame of phyletic patterns. Rows represent the discrete character patterns and columns represent the taxa. These data can be numeric or character (but not both). 
 }
   \item{matchtipstodata}{
-The default is FALSE, which means that the ordering of the taxa in the data matrix must match the internal ordering of tip labels of the tree. Set to TRUE, if the column names of the data matrix, i.e., the taxa names, are all present, with the same spelling and notation in the tip labels of the tree provided, in which case, the restriction on ordering is not necessary.
+The default is FALSE, which means that the user must ensure that the ordering of the taxa in the data matrix must match the internal ordering of tip labels of the tree. Set to TRUE, if the column names of the data matrix, i.e., the taxa names, are all present, with the same spelling and notation in the tip labels of the tree provided, in which case, the restriction on ordering is not necessary.
 }
   \item{unobserved}{
 A matrix of unobserved phyletic patterns, representing possible sampling or acquisition bias. Each row should be a unique phyletic pattern.
@@ -107,7 +107,7 @@ All arguments used while calling the estimaterates function are attached in a li
 \item{bg          }{List of group of nodes that capture branches that follow unique substitution rates.}
 \item{results     }{List of results including the parameter estimates for each unique entry of modelmat (excluding zeros), standard errors, number of parameters fit, and AIC and BIC values. Furthermore, details from the optimization routine applied are also available. Use ...$results$wop$parsep.}
 \item{data_red    }{Unique phyletic patterns observed.}
-\item{w           }{Number of times each gene phyletic pattern was observed.}
+\item{w           }{List of number of times each gene phyletic pattern was observed.}
 }
 
 \author{

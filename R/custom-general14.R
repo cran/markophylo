@@ -36,16 +36,58 @@ print.markophylo <- function(x, ...) {
     cat("Not all models converged. \n")
   cat("Time taken:", x$time[3], "seconds.\n")
 }
+# calibrate_ratemat <- function(x, Q, iroot){
+#   #Outputs the average number of transition events per site per evolutionary time unit.
+#   #x takes ...$results$wop$parsep$rates[,,1]
+#   #OR for reversible x takes x$results$wop$revcombined$rates[,,1]
+#   #Q takes ...$modelmat or ...$results$wop$modelmat2
+#   #iroot takes ...$results$wop$parsep$rates[,,1]
+#   #Should probably output iroot no matter if it is equal, stationary, or rpvec.
+#   #Already output if maxlik
+#   Q_out <- Q
+#   for (gf in 1:length(x)) {
+#     Q_out[Q == gf] <- x[gf]
+#   }
+#   diag(Q_out) <- -rowSums(Q_out, na.rm = TRUE)
+#   return(-sum(diag(Q_out)*iroot))
+# }
 plottree <- function(x, colors = NULL, ...) {
   if (is.null(colors)) 
-    cat("colors option is required", "\n")
+    colors <- grDevices::rainbow(length(x$bg))
   colo <- NULL
   for (i in 1:nrow(x$tree$edge)) {
-    colo[i] <- which(unlist(lapply(lapply(x$bg, FUN = function(X) c(x$tree$edge[i, 1], x$tree$edge[i, 2]) %in% X), FUN = "all"), use.names = FALSE))
+    tmp <- which(unlist(lapply(lapply(x$bg, FUN = function(X) c(x$tree$edge[i, 1], x$tree$edge[i, 2]) %in% X), FUN = "all"), use.names = FALSE))
+    if((length(tmp) > 1)) {
+      colo[i] <- tmp[which.min(unlist(lapply(x$bg, FUN = length)))]
+    } else{
+      colo[i] <- tmp
+    }
   }
   ape::plot.phylo(x$tree, edge.color = colors[colo], ...)
 }
-
+#########Check bg list of nodes argument###########
+checkbglist <- function(bg, tree){
+  all_branches <- TRUE
+  for(i in 1:length(tree$edge.length)) {
+    if(!any(unlist(lapply(lapply(bg, FUN = function(j) tree$edge[i,] %in% j),FUN="all")))) all_branches <- FALSE
+  }
+  return(all_branches)
+}
+patterns <- function(x) { 
+  #x is the matrix of phyletic patterns...
+  if(is.data.frame(x)) x <- as.matrix(x)
+  wfn <- summary(as.factor(apply(x, 1, paste, collapse = " ")), maxsum = nrow(x))
+  b <- attr(wfn, "names")
+  ww <- unname(cbind(b, wfn))
+  if (is.character(x[1, 1])) {
+    databp_red1 <- na.omit(unlist(strsplit(ww[,1],split = " ")))
+  } else {
+    databp_red1 <- na.omit(as.numeric(unlist(strsplit(ww[,1],split = " "))))
+  }
+  databpr <- matrix(databp_red1, ncol = ncol(x), byrow = T)
+  colnames(databpr) <- colnames(x)
+  return(list(w = wfn, databp_red = databpr, names = colnames(x)))
+}
 estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FALSE, unobserved = NULL, alphabet = NULL, modelmat = NULL, bgtype = "listofnodes", bg = NULL, partition = NULL, ratevar = FALSE, nocat = 4, reversible = FALSE, numhessian = TRUE,  rootprob = NULL, rpvec = NULL, lowli = 0.001, upli = 100, ...) {
   ptm <- proc.time()
   if(ratevar!=FALSE) ratevar <- match.arg(ratevar,c("discgamma","partitionspecificgamma"))
@@ -60,6 +102,9 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     stop("unobserved should be a matrix.")
   if(bgtype=="listofnodes" & !is.null(bg) & !is.list(bg))
     stop("bg should be a vector with listofnodes argument.")
+  if(bgtype=="listofnodes" & !is.null(bg) & is.list(bg)){
+    if(!checkbglist(bg, usertree)) stop("Some branch is missing in bg.")
+  }
   if(bgtype=="ancestornodes" & !is.null(bg) & !is.vector(bg))
     stop("bg should be a list with ancestornodes argument.")
   if (is.null(alphabet)) 
@@ -89,7 +134,6 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     suppressMessages(loadNamespace(funcval))
   }
   libload("ape")
-  libload("stringr")
   libload("numDeriv")
   libload("Rcpp")
   #########Build substitution rate index matrix#####################
@@ -181,6 +225,7 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   #########Transition rate matrix and substitution rate matrix#######
   TPM_taxa <- function(rates, ad, ti, rpin) {
     j <- unlist(lapply(lapply(bg, FUN = function(X) c(ad[1], ad[2]) %in% X), FUN = "all"), use.names = FALSE)
+    if(sum(j) > 1) j[j][-which.min(unlist(lapply(bg, FUN = length)))] <- FALSE
     for (gf in 1:length(rates[, j])) {
       Q[modelmat == gf] <- rates[gf, j]
     }
@@ -204,11 +249,11 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   
   if(matchtipstodata) {
     fin <- userphyl[,pmatch(usertree$tip.label, colnames(userphyl))] 
-    datab <- t(fin)
+    datab <- fin
   } else {
-    datab <- t(userphyl)
+    datab <- userphyl
   }
-  phyl <- ncol(datab)
+  phyl <- nrow(datab)
   nooftaxa <- length(tree1$tip.label)
   al <- length(alphabet)
   Q <- modelmat
@@ -244,28 +289,15 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   if (!is.null(partition)) {
     psp <- length(partition)
   } else {
-    partition <- list(c(1:ncol(databp)))
+    partition <- list(c(1:nrow(databp)))
     psp <- 1
   }
   if (ratevar == FALSE) 
     nocat <- 1
-  patterns <- function(dataforp) {
-    wfn <- summary(as.factor(apply(dataforp, 2, paste, collapse = "")), maxsum = ncol(dataforp))
-    b <- attr(wfn, "names")
-    ww <- unname(cbind(b, wfn))
-    if (is.character(dataforp[1, 1])) {
-      databp_red1 <- na.omit(unlist(stringr::str_split(ww[, 1], "")))
-    } else {
-      databp_red1 <- na.omit(as.numeric(unlist(stringr::str_split(ww[, 1], ""))))
-    }
-    databpr <- matrix(databp_red1, ncol = nooftaxa, byrow = T)
-    colnames(databpr) <- colnames(userphyl)
-    return(list(w = wfn, databp_red = databpr))
-  }
   w <- list()
   databp_red <- list()
   for (i in 1:psp) {
-    temp <- patterns(dataforp = databp[, partition[[i]]])
+    temp <- patterns(x = databp[partition[[i]], ])
     w[[i]] <- temp$w
     databp_red[[i]] <- temp$databp_red
   }
@@ -484,7 +516,7 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     phy <- unlist_w * unlist(lapply(X = 1:psp, FUN = function(i) ll(model, pm[[i]], rootp = rootp[[i]], Lixi_in_ll = Lixi_init[[i]])), use.names = FALSE)
     if (!is.null(unobserved) & is.null(partition)){
       corr <- unlist(lapply(X = 1:psp, FUN = function(i) ll(model, pm[[i]], rootp = rootp[[i]], Lixi_in_ll = Lixi_corr_init)), use.names = FALSE)
-      return(-(sum(phy) - ncol(databp) * log(1 - sum(exp(corr))) ) )
+      return(-(sum(phy) - nrow(databp) * log(1 - sum(exp(corr))) ) )
     } else if (!is.null(unobserved) & !is.null(partition)){
       corr <- lapply(X = 1:psp, FUN = function(i) ll(model, pm[[i]], rootp = rootp[[i]], Lixi_in_ll = Lixi_corr_init))
       return( -( sum(phy) - 
@@ -614,8 +646,11 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   if (lowli %in% parvec || upli %in% parvec) {
     cat("Estimated parameters on interval bounds.")
   }
-  if (!all(is.finite(sevec))) 
-    cat("Something is not right with the standard errors. Check Hessian matrix estimate.")
+  if (!all(is.finite(sevec)) & numhessian) {
+    cat("Something is not right with the standard errors.")
+    cat("Check Hessian matrix estimate.\n")
+    cat("Consider calculating bootstrap errors (make sure to use numhessian=FALSE).\n")
+  }
   
   timetaken <- proc.time() - ptm
   val <- list(call = match.call(), conv = convcheck, time = timetaken, bgtype = bgtype, bg = bg, results = results, tree = tree1, data_red = databp_red, alphabet = alphabet, reversible = reversible,  w = w, taxa = nooftaxa, phyl = ncol(databp), rootprob = rootprob, modelmat = modelmat, modelnames=modelnames)

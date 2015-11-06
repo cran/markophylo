@@ -1,12 +1,14 @@
 useDynLib(markophylo)
 
-exportPattern(estimaterates, print.markophylo, plottree)
+export(estimaterates)
+export(print.markophylo)
+export(plottree)
+export(patterns)
 
 importFrom(Rcpp, evalCpp)
 importFrom(stats,na.omit,qgamma,nlminb)
 importFrom(ape,plot.phylo,is.binary.tree,is.rooted,reorder.phylo,read.tree,multi2di)
 importFrom(phangorn,Ancestors,Descendants)
-importFrom(stringr,str_split)
 importFrom(numDeriv,hessian)
 importFrom(utils,read.table)
 

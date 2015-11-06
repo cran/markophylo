@@ -12,8 +12,8 @@ Allows for fitting of maximum likelihood models using Markov chains on phylogene
 \tabular{ll}{
 Package: \tab markophylo\cr
 Type: \tab Package\cr
-Version: \tab 1.0.2\cr
-Date: \tab 2015-08-31\cr
+Version: \tab 1.0.3\cr
+Date: \tab 2015-11-5\cr
 License: \tab GPL (>= 2)\cr
 }
 Function \code{\link{estimaterates}} is the main workhorse of the package, allowing users to specify a substitution rate matrix and estimate it. Partition analysis, gamma rate variation, estimating root frequencies of the discrete characters, and specifying clades (or a set of branches) with their own unique rates are all possible.
@@ -35,8 +35,6 @@ Harmon Luke J, Jason T Weir, Chad D Brock, Richard E Glor, and Wendell Challenge
 Paradis, E., Claude, J. & Strimmer, K. 2004. APE: analyses of phylogenetics and evolution in R language. Bioinformatics 20: 289-290. R package version 3.2.
   
 Schliep, K.P. 2011. phangorn: phylogenetic analysis in R. Bioinformatics, 27(4) 592-593. R package version 1.99.13.
-
-Wickham, Hadley (2012). stringr: Make it easier to work with strings. R package version 1.0.0.
 
 Yang, Z. (1994). Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods. Journal of Molecular evolution, 39(3), 306--314.
 }

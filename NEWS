@@ -1,3 +1,15 @@
+markophylo v1.0-3 (Release date: 2015-11-05)
+==============
+Changes:
+
+* Added citation to manuscript in Bioinformatics.
+* Removed stringr dependency.
+* Quashed a bug that would pop up when building unique phyletic patterns (used within the algorithm) observed when discrete characters in the phyletic patterns included numbers greater than 9.
+* Quashed a bug that popped up when fitting a model with a single branch having a unique rate separate from the surrounding branches.
+* Exported a function called "patterns" used to get list of unique phyletic patterns and their counts.
+* Updated vignette with some installation instructions and contact information.
+* Added a minimal check for bg "listofnodes" argument, which will stop and warn users if any branch is not being listed in the branch grouping.
+
 markophylo v1.0-2 (Release date: 2015-08-28)
 ==============
 Changes:

@@ -1,3 +1,18 @@
+## ----eval=FALSE----------------------------------------------------------
+#  install.packages("markophylo", dependencies = TRUE, repos = "http://cran.r-project.org")
+
+## ----eval=FALSE----------------------------------------------------------
+#  install.packages(c("Rcpp","RcppArmadillo","ape","phangorn",
+#  "numDeriv","knitr"), repos = "http://cran.r-project.org")
+#  
+#  install.packages("markophylo_1.0.2.tar.gz", repos = NULL, type = "source")
+
+## ----eval=FALSE----------------------------------------------------------
+#  install.packages(c("Rcpp","RcppArmadillo","ape","phangorn",
+#  "numDeriv","knitr"), repos = "http://cran.r-project.org")
+#  
+#  install.packages("markophylo_1.0.2.tar.gz", repos = NULL, type = "source")
+
 ## ---- fig.show='asis',fig.align = 'center'-------------------------------
 library(markophylo)
 data(simdata1)
@@ -37,14 +52,14 @@ filterall2 <- which(apply(simdata1$data, MARGIN = 1, FUN =
 filteredsimdata1 <- simdata1$data[-c(filterall1, filterall2), ]
 model1_f <- estimaterates(usertree = simdata1$tree, userphyl = filteredsimdata1,
                           alphabet = c(1, 2), rootprob = "equal", 
-                          modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
+                          modelmat = "ARD")
 print(model1_f)
 
 ## ------------------------------------------------------------------------
 model1_f_corrected <- estimaterates(usertree = simdata1$tree, userphyl = filteredsimdata1, 
                                     unobserved = matrix(c(1, 1, 1, 1, 2, 2, 2, 2), nrow = 2, 
                                                         byrow = TRUE), alphabet = c(1, 2), 
-                        rootprob = "equal", modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
+                        rootprob = "equal", modelmat = "ARD")
 print(model1_f_corrected)
 
 ## ------------------------------------------------------------------------
@@ -66,7 +81,7 @@ ape::tiplabels(frame = "circle", cex = 0.7)
 ## ------------------------------------------------------------------------
 model2_2 <- estimaterates(usertree = simdata2$tree, userphyl = simdata2$data, 
                         alphabet = c(1, 2), bgtype = "listofnodes", bg = list(c(3,4,7),c(1,2,5,6,7)),
-                        rootprob = "equal", modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
+                        rootprob = "equal", modelmat = "ARD")
 print(model2_2)
 
 ## ---- fig.show='asis',fig.align = 'center'-------------------------------
@@ -91,8 +106,7 @@ print(table(simdata4$data))
 model4 <- estimaterates(usertree = simdata4$tree, userphyl = simdata4$data, 
                         alphabet = c("a", "c", "g", "t"), rootprob = "maxlik",
                         ratevar = "discgamma", nocat = 4, 
-                        modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
-                                            1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
+                        modelmat = "ER")
 print(model4)
 
 ## ------------------------------------------------------------------------
@@ -119,8 +133,7 @@ model4_f_corrected <- estimaterates(usertree = simdata4$tree, userphyl = filtere
                                     unobserved = unob_patt,
                         alphabet = c("a", "c", "g", "t"), rootprob = "maxlik", 
                         ratevar = "discgamma", nocat = 4, 
-                        modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
-                                            1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
+                        modelmat = "ER")
 print(model4_f_corrected)
 
 ## ------------------------------------------------------------------------
@@ -135,8 +148,7 @@ model5 <- estimaterates(usertree = simdata5$tree, userphyl = simdata5$data,
                         partition = list((1:6000)[-seq(3, 6000, by = 3)], 
                                          seq(3, 6000, by = 3) ),
                         ratevar = "partitionspecificgamma", nocat = 4, 
-                        modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
-                                            1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
+                        modelmat = "ER")
 print(model5)
 
 ## ------------------------------------------------------------------------

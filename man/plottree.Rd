@@ -12,8 +12,8 @@ plottree(x, colors = NULL, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{An object of class "idea".}
-  \item{colors}{Vector of colours the same length as length(x$bg). Note that these colours are used to colour the different branch groupings following their own rates.}
+  \item{x}{An object of class "markophylo".}
+  \item{colors}{Default works well. However, a custom vector of colours can be specified here---should be the same length as length(x$bg). Note that these colours are used to colour the different branch groupings following their own rates.}
   \item{\dots}{Any further commands to ape::plot.phylo.}
 }
 

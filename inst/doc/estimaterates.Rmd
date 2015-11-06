@@ -9,8 +9,8 @@ vignette: >
   %\VignetteIndexEntry{Markov Chain Analysis on Phylogenetic Trees}
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
----
 
+---
 The *markophylo* package allows for estimating substitution rates using a user-specified, i.e., hypothesis driven, substitution rate matrix in a continuous-time markov chain model on phylogenies. The package is quite efficient, with the workhorse functions written in C++ (using the Rcpp and RcppArmadillo packages), and can analyze data on discrete characters like the following (among others):
 
 - Gene family presence/absence for closely related taxa to infer lateral gene transfer rates.
@@ -29,6 +29,42 @@ The package contains five simulated data sets. These data illustrate the kinds o
 - The discrete character frequencies at the root can be user-specified, equal for each character state, follow markov chain stationary probabilities, or be estimated using the maximum likelihood framework.
 - Correcting for multiple unobservable phyletic patterns, i.e., sampling (or acquisition or ascertainment) bias.
 
+## Contact
+If you have any questions or requests for a feature, drop me a line at <udang@mcmaster.ca>.
+
+## Installation
+### CRAN
+The following commands installs *markophylo* binaries from the Comprehensive R Archive Network (CRAN):
+
+```{r,eval=FALSE}
+install.packages("markophylo", dependencies = TRUE, repos = "http://cran.r-project.org")
+```
+
+### Source package
+Installing *markophylo* from the source distribution after downloading the package source from https://cran.r-project.org/package=markophylo/ can be done using the following commands:
+
+#### OS X Yosemite
+
+```{r,eval=FALSE}
+install.packages(c("Rcpp","RcppArmadillo","ape","phangorn",
+"numDeriv","knitr"), repos = "http://cran.r-project.org")
+
+install.packages("markophylo_1.0.2.tar.gz", repos = NULL, type = "source")
+```
+Make sure the version number of *markophylo* reflects the latest version on CRAN.
+
+If "-lgfortran" and/or "-lquadmath" errors are encountered on a OS X system, try unpacking gfortran-4.8.2-darwin13.tar.bz2 from http://r.research.att.com/libs/ into /usr/local. This issue has been known to occur in the past with *RcppArmadillo*. This is also mentioned in the *Rcpp* FAQs vignette on https://cran.r-project.org/package=Rcpp/index.html.
+
+#### Windows
+Installing an *R* package from source that requires compilation on Windows requires prior installation of *Rtools* from http://cran.r-project.org/bin/windows/Rtools/. Rtools contains *MinGW* compilers needed for building packages requiring compilation of *Fortran*, *C* or *C++* code. The PATH variable should be allowed to be modified during installation of Rtools. If the above is not allowed, following the installation of *Rtools*, the PATH variable must be set to include "RTools/bin" and "Rtools/gcc-x.y.z/bin", where "x.y.z" refers to the version number of gcc. Then,
+
+```{r,eval=FALSE}
+install.packages(c("Rcpp","RcppArmadillo","ape","phangorn",
+"numDeriv","knitr"), repos = "http://cran.r-project.org")
+
+install.packages("markophylo_1.0.2.tar.gz", repos = NULL, type = "source")
+```
+Make sure the version number of *markophylo* reflects the latest version on CRAN.
 
 ## Illustration 1
 ### Fitting a simple model and evaluating the results.
@@ -64,11 +100,11 @@ model1 <- estimaterates(usertree = simdata1$tree, userphyl = simdata1$data,
                         modelmat = "ARD")
 print(model1)
 ```
-The second code block is using the "ARD" option for *modelmat* which automatically uses a two state substitution rate matrix here with two rates to be estimated. The output from printing *model1* (which is an object of class 'markophylo') is self-explanatory. The estimated rates (given as a array in *$rates*) and the standard errors (both indexed according to the parameter index matrix) are output. The log-likelihood at the maximum likelihood estimates along with the values of the model selection criteria (Akaike information criterion and Bayesian information criterion) are also provided. Because we did not specify *a priori* any clades to be fit with their own unique rates, these estimates are homogenous over the tree. This is also reflected in the one component list output under "Groups of nodes with the same rates". Note that the *model1* object is of class *markophylo*.
+The second code block is using the "ARD" option for *modelmat* which automatically uses a two state substitution rate matrix here with two rates to be estimated. The output from printing *model1* (which is an object of class 'markophylo') is self-explanatory. The estimated rates (given as an array in *$rates*) and the standard errors (both indexed according to the parameter index matrix) are output. The log-likelihood at the maximum likelihood estimates along with the values of the model selection criteria (Akaike information criterion and Bayesian information criterion) are also provided. Because we did not specify *a priori* any clades to be fit with their own unique rates, these estimates are homogenous over the tree. This is also reflected in the one component list output under "Groups of nodes with the same rates". Note that the *model1* object is of class *markophylo*.
 ```{r}
 print(class(model1))
 ```
-Among other things, *model1* contains the number of unique patterns observed that can be retreived using `model1$w`. As expected, for binary discrete characters for four taxa, there are `2^4` unique patterns.
+Among other things, *model1* contains the number of unique patterns observed that can be retreived using `model1$w`. As expected, for binary discrete characters for four taxa, there are `2^4` unique patterns. These patterns can also be calculated by providing the data set directly to the *patterns* function.
 ```{r, echo=FALSE, results='asis'}
 knitr::kable(model1$w, row.names = NA, col.names = c("Number of Times Pattern Observed") )
 ```
@@ -91,7 +127,7 @@ filterall2 <- which(apply(simdata1$data, MARGIN = 1, FUN =
 filteredsimdata1 <- simdata1$data[-c(filterall1, filterall2), ]
 model1_f <- estimaterates(usertree = simdata1$tree, userphyl = filteredsimdata1,
                           alphabet = c(1, 2), rootprob = "equal", 
-                          modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
+                          modelmat = "ARD")
 print(model1_f)
 ```
 Clearly, there is a big difference as compared to the output from earlier. However, it is easy to correct for such sampling bias using the *estimaterates* function by providing a matrix with each row representing a unique unobservable pattern in the data. Here, a matrix with 2 rows, the first row all ones, and the second row all twos is supplied to the *unobserved* argument.
@@ -99,7 +135,7 @@ Clearly, there is a big difference as compared to the output from earlier. Howev
 model1_f_corrected <- estimaterates(usertree = simdata1$tree, userphyl = filteredsimdata1, 
                                     unobserved = matrix(c(1, 1, 1, 1, 2, 2, 2, 2), nrow = 2, 
                                                         byrow = TRUE), alphabet = c(1, 2), 
-                        rootprob = "equal", modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
+                        rootprob = "equal", modelmat = "ARD")
 print(model1_f_corrected)
 ```
 
@@ -128,7 +164,7 @@ Now,
 ```{r}
 model2_2 <- estimaterates(usertree = simdata2$tree, userphyl = simdata2$data, 
                         alphabet = c(1, 2), bgtype = "listofnodes", bg = list(c(3,4,7),c(1,2,5,6,7)),
-                        rootprob = "equal", modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
+                        rootprob = "equal", modelmat = "ARD")
 print(model2_2)
 ```
 In the output, groups of nodes that delimit the branches that follow the same rates (within groups) are displayed as two vector components of an array. The estimated rates then follow the ordering of these components. Generally, the output rates in the first column are the estimated rates (as indexed by the parameter index matrix) for the first group, the second column for the second group, and so on. To get a visual confirmation of the different branches following their own unique rates, the following command can be used:
@@ -163,8 +199,7 @@ print(table(simdata4$data))
 model4 <- estimaterates(usertree = simdata4$tree, userphyl = simdata4$data, 
                         alphabet = c("a", "c", "g", "t"), rootprob = "maxlik",
                         ratevar = "discgamma", nocat = 4, 
-                        modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
-                                            1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
+                        modelmat = "ER")
 print(model4)
 ```
 ### Correcting for unobservable patterns 
@@ -196,8 +231,7 @@ model4_f_corrected <- estimaterates(usertree = simdata4$tree, userphyl = filtere
                                     unobserved = unob_patt,
                         alphabet = c("a", "c", "g", "t"), rootprob = "maxlik", 
                         ratevar = "discgamma", nocat = 4, 
-                        modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
-                                            1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
+                        modelmat = "ER")
 print(model4_f_corrected)
 ```
 
@@ -217,8 +251,7 @@ model5 <- estimaterates(usertree = simdata5$tree, userphyl = simdata5$data,
                         partition = list((1:6000)[-seq(3, 6000, by = 3)], 
                                          seq(3, 6000, by = 3) ),
                         ratevar = "partitionspecificgamma", nocat = 4, 
-                        modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
-                                            1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
+                        modelmat = "ER")
 print(model5)
 ```
 
@@ -241,7 +274,7 @@ print(mp_model_2)
 ```
 Notice the slightly better log-likelihood (at the MLEs) value for the latter model. However, in this case, both the BIC and the AIC (higher is better here) indicate that the former model is the better fitting (more parsimonious) model.
 
-## Specifying *modelmat*
+## Specifying custom *modelmat*
 
 Can be one of two options: pre-built or user-specified. For the pre-built matrices, a four state matrix is used for the following examples. The dimensionality of the matrix is automatically inferred from the alphabet option.
 
