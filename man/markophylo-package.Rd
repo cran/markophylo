@@ -12,8 +12,8 @@ Allows for fitting of maximum likelihood models using Markov chains on phylogene
 \tabular{ll}{
 Package: \tab markophylo\cr
 Type: \tab Package\cr
-Version: \tab 1.0.3\cr
-Date: \tab 2015-11-5\cr
+Version: \tab 1.0.4\cr
+Date: \tab 2015-12-31\cr
 License: \tab GPL (>= 2)\cr
 }
 Function \code{\link{estimaterates}} is the main workhorse of the package, allowing users to specify a substitution rate matrix and estimate it. Partition analysis, gamma rate variation, estimating root frequencies of the discrete characters, and specifying clades (or a set of branches) with their own unique rates are all possible.

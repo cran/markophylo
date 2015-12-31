@@ -40,7 +40,10 @@ The following commands installs *markophylo* binaries from the Comprehensive R A
 install.packages("markophylo", dependencies = TRUE, repos = "http://cran.r-project.org")
 ```
 
-### Source package
+### Source package from CRAN
+install.packages("markophylo", dependencies = TRUE, repos = "http://cran.r-project.org", type = "source")
+
+### Source package from file
 Installing *markophylo* from the source distribution after downloading the package source from https://cran.r-project.org/package=markophylo/ can be done using the following commands:
 
 #### OS X Yosemite

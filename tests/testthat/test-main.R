@@ -11,7 +11,8 @@ test_that("Data 1", {
   expect_equal(model1$results$wop$objective, 10055.01597621022, tolerance = 0.1, scale = 1 )
   expect_equal(model1$results$wop$df, 2, tolerance = 0.01, scale = 1 )
   expect_equal(model1$results$wop$AIC, -20114.032, tolerance = 0.1, scale = 1 )
-  expect_equal(model1$results$wop$BIC, -20112.8045887222, tolerance = 0.1, scale = 1 )
+  expect_equal(model1$results$wop$BIC, -20127.0663863828, tolerance = 0.1, scale = 1 )
+  expect_equal(model1$phyl, 5000, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 1 - GTR", {
@@ -27,7 +28,7 @@ test_that("Data 1 - GTR", {
   expect_equal(model1_rev$results$wop$objective, 10057.6252820299, tolerance = 0.1, scale = 1 )
   expect_equal(model1_rev$results$wop$df, 2, tolerance = 0.01, scale = 1 )
   expect_equal(model1_rev$results$wop$AIC, -20119.25, tolerance = 0.1, scale = 1 )
-  expect_equal(model1_rev$results$wop$BIC, -20118.0225887222, tolerance = 0.1, scale = 1 )
+  expect_equal(model1_rev$results$wop$BIC, -20132.2843863828, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 1 - unobserved data correction", {
@@ -44,7 +45,7 @@ test_that("Data 1 - unobserved data correction", {
   expect_equal(model1_f_corrected$results$wop$objective, 7363.33815280957, tolerance = 0.1, scale = 1 )
   expect_equal(model1_f_corrected$results$wop$df, 2, tolerance = 0.01, scale = 1 )
   expect_equal(model1_f_corrected$results$wop$AIC, -14730.676, tolerance = 0.1, scale = 1 )
-  expect_equal(model1_f_corrected$results$wop$BIC, -14729.4485887222, tolerance = 0.1, scale = 1 )
+  expect_equal(model1_f_corrected$results$wop$BIC, -14743.1897336979, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 2", {
@@ -60,7 +61,7 @@ test_that("Data 2", {
   expect_equal(model2$results$wop$objective, 10893.4834080664, tolerance = 0.1, scale = 1 )
   expect_equal(model2$results$wop$df, 4, tolerance = 0.01, scale = 1 )
   expect_equal(model2$results$wop$AIC, -21794.966, tolerance = 0.1, scale = 1 )
-  expect_equal(model2$results$wop$BIC, -21792.5111774445, tolerance = 0.1, scale = 1 )
+  expect_equal(model2$results$wop$BIC, -21821.0347727657, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 3", {
@@ -75,7 +76,7 @@ test_that("Data 3", {
   expect_equal(model3$results$wop$objective, 21659.3772016081, tolerance = 0.1, scale = 1 )
   expect_equal(model3$results$wop$df, 2, tolerance = 0.01, scale = 1 )
   expect_equal(model3$results$wop$AIC, -43322.754, tolerance = 0.1, scale = 1 )
-  expect_equal(model3$results$wop$BIC, -43321.5265887222, tolerance = 0.1, scale = 1 )
+  expect_equal(model3$results$wop$BIC, -43335.7883863828, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 3", {
@@ -90,7 +91,7 @@ test_that("Data 3", {
   expect_equal(model3$results$wop$objective, 21659.3772016081, tolerance = 0.1, scale = 1 )
   expect_equal(model3$results$wop$df, 2, tolerance = 0.01, scale = 1 )
   expect_equal(model3$results$wop$AIC, -43322.754, tolerance = 0.1, scale = 1 )
-  expect_equal(model3$results$wop$BIC, -43321.5265887222, tolerance = 0.1, scale = 1 )
+  expect_equal(model3$results$wop$BIC, -43335.7883863828, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 3; stationary; ancestornodes", {
@@ -108,7 +109,7 @@ test_that("Data 3; stationary; ancestornodes", {
   expect_equal(model3_st$results$wop$objective, 21658.3371702953, tolerance = 0.1, scale = 1 )
   expect_equal(model3_st$results$wop$df, 4, tolerance = 0.01, scale = 1 )
   expect_equal(model3_st$results$wop$AIC, -43324.674, tolerance = 0.1, scale = 1 )
-  expect_equal(model3_st$results$wop$BIC, -43322.2191774445, tolerance = 0.1, scale = 1 )
+  expect_equal(model3_st$results$wop$BIC, -43350.7427727657, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 3 - unobserved data correction", {
@@ -122,7 +123,7 @@ test_that("Data 3 - unobserved data correction", {
   expect_equal(model3_f$results$wop$objective, 20390.6316016373, tolerance = 0.1, scale = 1 )
   expect_equal(model3_f$results$wop$df, 5, tolerance = 0.01, scale = 1 )
   expect_equal(model3_f$results$wop$AIC, -40791.264, tolerance = 0.1, scale = 1 )
-  expect_equal(model3_f$results$wop$BIC, -40788.1954718056, tolerance = 0.1, scale = 1 )
+  expect_equal(model3_f$results$wop$BIC, -40823.4687994271, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 3 - unobserved data correction - discgamma", {
@@ -139,7 +140,7 @@ test_that("Data 3 - unobserved data correction - discgamma", {
   expect_equal(model3_f_dg$results$wop$objective, 20390.1790259543, tolerance = 0.1, scale = 1 )
   expect_equal(model3_f_dg$results$wop$df, 6, tolerance = 0.01, scale = 1 )
   expect_equal(model3_f_dg$results$wop$AIC, -40792.358, tolerance = 0.1, scale = 1 )
-  expect_equal(model3_f_dg$results$wop$BIC, -40788.6757661667, tolerance = 0.1, scale = 1 )
+  expect_equal(model3_f_dg$results$wop$BIC, -40831.0037593125, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 3 - unobserved data correction - partionspecificgamma", {
@@ -150,13 +151,13 @@ test_that("Data 3 - unobserved data correction - partionspecificgamma", {
   model3_f_pg <- estimaterates(usertree = simdata3$tree, userphyl = simdata3$data[-a3, ], unobserved = matrix(rep("a", 4), nrow = 1), alphabet = c("a", "c", "g", "t"), rootprob = "maxlik", ratevar = "partitionspecificgamma", nocat = 4, partition = newpart, modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
   expect_equal(model3_f_pg$results$wop$par, c(0.33604061006274, 1.02265413630596, 79.7497382822248, 12.8415242617211, 
                                               0.194645772368142, 0.0753286688219997, 0.0576588947412515), tolerance = 0.1, scale = 1 )
-  expect_equal(model3_f_pg$results$wop$se, c(0.0112442463243987, 0.0395626597843926, 633.502298790985, 11.8347656260673, 
-                                             0.0141500287278521, 0.00981353464923172, 0.0097061504921285), tolerance = 0.01, scale = 1 )
+  expect_equal(model3_f_pg$results$wop$se[-3], c(0.0112442463243987, 0.0395626597843926, 633.502298790985, 11.8347656260673, 
+                                             0.0141500287278521, 0.00981353464923172, 0.0097061504921285)[-3], tolerance = 0.01, scale = 1 )
   expect_equal(model3_f_pg$bg, list(1:7), tolerance = 0.01, scale = 1 )
   expect_equal(model3_f_pg$results$wop$objective, 20390.0331191522, tolerance = 0.1, scale = 1 )
   expect_equal(model3_f_pg$results$wop$df, 7, tolerance = 0.01, scale = 1 )
   expect_equal(model3_f_pg$results$wop$AIC, -40794.066, tolerance = 0.1, scale = 1 )
-  expect_equal(model3_f_pg$results$wop$BIC, -40789.7700605278, tolerance = 0.1, scale = 1 )
+  expect_equal(model3_f_pg$results$wop$BIC, -40839.1527191979, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 4", {
@@ -175,7 +176,7 @@ test_that("Data 4", {
   expect_equal(model4$results$wop$objective, 17763.3255939325, tolerance = 0.1, scale = 1 )
   expect_equal(model4$results$wop$df, 5, tolerance = 0.01, scale = 1 )
   expect_equal(model4$results$wop$AIC, -35536.652, tolerance = 0.1, scale = 1 )
-  expect_equal(model4$results$wop$BIC, -35533.5834718056, tolerance = 0.1, scale = 1 )
+  expect_equal(model4$results$wop$BIC, -35569.2379659571, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 4 - unobservable data correction", {
@@ -206,7 +207,7 @@ test_that("Data 4 - unobservable data correction", {
   expect_equal(model4_f$results$wop$objective, 12267.8003986961, tolerance = 0.1, scale = 1 )
   expect_equal(model4_f$results$wop$df, 5, tolerance = 0.01, scale = 1 )
   expect_equal(model4_f$results$wop$AIC, -24545.6, tolerance = 0.1, scale = 1 )
-  expect_equal(model4_f$results$wop$BIC, -24542.5314718056, tolerance = 0.1, scale = 1 )
+  expect_equal(model4_f$results$wop$BIC, -24576.5267511159, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 5", {
@@ -228,7 +229,7 @@ test_that("Data 5", {
   expect_equal(model5$results$wop$objective, 20718.1881784304, tolerance = 0.1, scale = 1 )
   expect_equal(model5$results$wop$df, 7, tolerance = 0.01, scale = 1 )
   expect_equal(model5$results$wop$AIC, -41450.376, tolerance = 0.1, scale = 1 )
-  expect_equal(model5$results$wop$BIC, -41446.0800605278, tolerance = 0.1, scale = 1 )
+  expect_equal(model5$results$wop$BIC, -41497.2726032375, tolerance = 0.1, scale = 1 )
 })
 
 test_that("Data 5 - reversible; partition; gamma rate variation; ancestornodes", {
@@ -264,5 +265,5 @@ test_that("Data 5 - reversible; partition; gamma rate variation; ancestornodes",
   expect_equal(model5_rev$results$wop$objective, 20650.9142963678, tolerance = 0.1, scale = 1 )
   expect_equal(model5_rev$results$wop$df, 9, tolerance = 0.01, scale = 1 )
   expect_equal(model5_rev$results$wop$AIC, -41319.828, tolerance = 0.1, scale = 1 )
-  expect_equal(model5_rev$results$wop$BIC, -41314.3046492501, tolerance = 0.1, scale = 1 )
+  expect_equal(model5_rev$results$wop$BIC, -41380.1236327339, tolerance = 0.1, scale = 1 )
 })
