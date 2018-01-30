@@ -1,13 +1,13 @@
-\name{estimaterates}
-\alias{estimaterates}
+\name{estimaterates_f}
+\alias{estimaterates_f}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 Estimate substitution rate matrix.
 }
 \description{
-Estimate a substitution rate matrix. Users can specify a substitution rate matrix and estimate it. Partition analysis, gamma rate variation, estimating root frequencies of the discrete characters, and specifying clades (or a set of branches) with their own unique rates are also possible. See arguments below. See vignette for detailed examples.}
+Beta version of code; still in development. More or less identical to \code{\link{estimaterates}}. Here, some entries of the substitution rate matrix can be specified by the user to be held fixed during the parameter estimation.}
 \usage{
-estimaterates(usertree = NULL, userphyl = NULL, matchtipstodata = FALSE,
+estimaterates_f(usertree = NULL, userphyl = NULL, matchtipstodata = FALSE,
               unobserved = NULL, alphabet = NULL, modelmat = NULL, 
               bgtype = "listofnodes", bg = NULL, partition = NULL, 
               ratevar = FALSE, nocat = 4, reversible = FALSE, numhessian = TRUE, 
@@ -31,27 +31,7 @@ A matrix of unobserved phyletic patterns, representing possible sampling or acqu
 The set of discrete characters used. May be integer only or character only.
 }
   \item{modelmat}{
-Can be one of two options: pre-built or user-specified. For the pre-built matrices, use:
- \itemize{
-   \item "ER" for an equal rates matrix, e.g., matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA, 1, 1, 1, 1, NA
-), nrow = 4, ncol = 4)
-   \item "SYM" for a symmetric matrix, e.g., matrix(c(NA, 1, 2, 3, 1, NA, 4, 5, 2, 4, NA, 6, 3, 5, 6, NA
-), 4,4)
-   \item "ARD" for an all rates different matrix, e.g., matrix(c(NA, 1, 2, 3, 4, NA, 5, 6, 7, 8, NA, 9, 10, 11, 12, 
-NA), 4, 4)
-   \item "GTR" for a general time reversible model. This sets reversible to be TRUE, rootprob to be "maxlik", and the rate matrix supplied to the function is symmetric. The estimated rate matrix can be written as the product of a symmetric matrix multiplied by a diagonal matrix (consisting of the estimated root probabilities).
-   \item "BD" for a standard birth death matrix, e.g., matrix(c(NA, 1, 0, 0, 2, NA, 1, 0, 0, 2, NA, 1, 0, 0, 2, NA
-), 4, 4)
-   \item "BDER" for a standard birth death matrix, e.g., matrix(c(NA, 1, 0, 0, 1, NA, 1, 0, 0, 1, NA, 1, 0, 0, 1, NA
-), 4, 4)
-   \item "BDSYM" for a standard birth death matrix, e.g., matrix(c(NA, 1, 0, 0, 1, NA, 2, 0, 0, 2, NA, 3, 0, 0, 3, NA
-), 4, 4)
-   \item "BDARD" for an all rates different birth death matrix, e.g., matrix(c(NA, 1, 0, 0, 4, NA, 2, 0, 0, 5, NA, 3, 0, 0, 6, NA
-), 4, 4)
- }
-These pre-built matrices are inspired by the APE and DiscML packages.
-
-A square matrix can also be input that consists of integer values denoting the indices of the substitution rates to be estimated. The number of rows and columns corresponds to the total number of discete states possible in the data. For example, using matrix(c(NA, 1, 2, NA), 2, 2) means that two rates must be estimated corresponding to the entries 1 and 2, respectively. Using matrix(c(NA, 1, 0, NA), 2, 2) means that only one rate must be estimated and the entry 0 corresponds to a substitution that is not permitted (hence, does not need to be estimated). See examples and vignette for more examples.
+Accepts the same arguments as \code{\link{estimaterates}}.  Here, some entries of the substitution rate matrix can be specified by the user to be held fixed during the parameter estimation. A square matrix can be input that consists of integer values denoting the indices of the substitution rates to be estimated and entries with decimal values (that are not equivalent to an integer in R, i.e., something other than, for example, 1.0, 2.0, etc.) to be held fixed. See example.
 }
   \item{bgtype}{
 Use this to group branches hypothesized to follow the same rates (but differ from other branches). If clade-specific insertion and deletion rates are required to be estimated, use argument option "ancestornodes". If, on the other hand, a group of branches (not in a clade) are hypothesized to follow the same rates, use argument option "listofnodes".}
@@ -118,7 +98,7 @@ Utkarsh J. Dang and G. Brian Golding
 \email{udang@binghamton.edu}
 }
 \note{
-See the vignette for an in-depth look at some examples.
+Experimental function
 }
 \references{
 Paradis, E., Claude, J. & Strimmer, K. 2004. APE: analyses of phylogenetics and evolution in R language. Bioinformatics 20: 289-290. R package version 3.2.
@@ -129,64 +109,29 @@ Tane Kim and Weilong Hao 2014. DiscML: An R package for estimating evolutionary 
 
 
 \examples{
+##############
+\dontrun{
+rm(list=ls())
+set.seed(1) #set seed
 library(markophylo)
-##############
-data(simdata1) #example data for a 2-state continuous time markov chain model.
-#Now, plot example tree.
-ape::plot.phylo(simdata1$tree, edge.width = 2, show.tip.label = FALSE, no.margin = TRUE) 
-ape::nodelabels(frame = "circle", cex = 0.7)
-ape::tiplabels(frame = "circle", cex = 0.7)
-print(simdata1$Q) #substitution matrix used to simulate example data
-print(table(simdata1$data)) #states and frequencies
-model1 <- estimaterates(usertree = simdata1$tree, userphyl = simdata1$data, 
-                        alphabet = c(1, 2), rootprob = "equal", 
-                        modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
-print(model1)
-####
-\donttest{
-#If the data is known to contain sampling bias such that certain phyletic
-#patterns are not observed, then these unobserved data can be corrected for
-#easily. First, let's create a filtered version of the data following which
-#a correction will be applied within the function. Here, any patterns with all
-#ones or twos are filtered out.
-filterall1 <- which(apply(simdata1$data, MARGIN = 1, FUN = 
-                            function(x) isTRUE(all.equal(as.vector(x), c(1, 1, 1, 1)))))
-filterall2 <- which(apply(simdata1$data, MARGIN = 1, FUN = 
-                            function(x) isTRUE(all.equal(as.vector(x), c(2, 2, 2, 2)))))
-filteredsimdata1 <- simdata1$data[-c(filterall1, filterall2), ]
-model1_f_corrected <- estimaterates(usertree = simdata1$tree, userphyl = filteredsimdata1, 
-                          unobserved = matrix(c(1, 1, 1, 1, 2, 2, 2, 2), nrow = 2,  byrow = TRUE), 
-                          alphabet = c(1, 2), rootprob = "equal", 
-                          modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
-print(model1_f_corrected)
-##############
-data(simdata2)
-print(simdata2$Q)
-#While simulating the data found in simdata2, the clade with node 7 as its
-#most recent common ancestor (MRCA) was constrained to have twice the 
-#substitution rates as the rest of the branches in the tree.
-print(table(simdata2$data))
-model2 <- estimaterates(usertree = simdata2$tree, userphyl = simdata2$data, 
-                        alphabet = c(1, 2), bgtype = "ancestornodes", bg = c(7),
-                        rootprob = "equal", modelmat = matrix(c(NA, 1, 2, NA), 2, 2))
-print(model2)
-plottree(model2, colors=c("blue", "darkgreen"), edge.width = 2, show.tip.label = FALSE, 
-         no.margin = TRUE)
-ape::nodelabels(frame = "circle", cex = 0.7)
-ape::tiplabels(frame = "circle", cex = 0.7)
-##############
-#Nucleotide data was simulated such that the first half of sites followed
-#substitution rates different from the other half of sites. Data was simulated
-#in the two partitions with rates 0.33 and 0.99.
-data(simdata3)
-print(dim(simdata3$data))
-print(table(simdata3$data))
-model3 <- estimaterates(usertree = simdata3$tree, userphyl = simdata3$data, 
-                        alphabet = c("a", "c", "g", "t"), rootprob = "equal", 
-                        partition = list(c(1:2500), c(2501:5000)), 
-                        modelmat = matrix(c(NA, 1, 1, 1, 1, NA, 1, 1, 
-                                            1, 1, NA, 1, 1, 1, 1, NA), 4, 4))
-print(model3)
+tree1 <- ape::rtree(4, br = runif(6, 0.01, 0.3)) #generate a random 4-taxa tree (6 branches) 
+bf <- c(0.33, 0.33, 0.34) #vector of equal root frequencies
+gf <- 5000 #number of character patterns to be simulated
+rootseq <- sample(1:3, gf, replace = TRUE, prob = bf) #simulate the MRCA sequence (1s and 2s).
+par1 <- 1.5 
+par2 <- 3   
+par3 <- 5
+Q_sim <- matrix(c(NA, 0.6, par2, par1, NA, 0.8, par2, par3, NA), 3, 3) 
+#generated substitution rate matrix
+diag(Q_sim) <- -rowSums(Q_sim, na.rm = TRUE)
+print(Q_sim)
+#simulate data using the geiger package and Q_sim
+data_sim <- sapply(1:gf, FUN = function(X) geiger::sim.char(tree1, 
+Q_sim, model = "discrete", root = rootseq[X])) 
+simulateddat <- list(data = t(data_sim), Q = Q_sim, tree = tree1)
+
+model1 <- markophylo::estimaterates_f(usertree = simulateddat$tree, 
+userphyl = simulateddat$data, alphabet = c(1, 2, 3), rootprob = "equal", 
+modelmat = matrix(c(NA, 0.6, 2, 1, NA, 0.8, 2, 3, NA), 3, 3))
 }
-#More examples in the vignette.
 }

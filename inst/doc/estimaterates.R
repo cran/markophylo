@@ -1,15 +1,15 @@
 ## ----eval=FALSE----------------------------------------------------------
-#  install.packages("markophylo", dependencies = TRUE, repos = "http://cran.r-project.org")
+#  install.packages("markophylo", dependencies = TRUE, repos = "https://cran.r-project.org")
 
 ## ----eval=FALSE----------------------------------------------------------
 #  install.packages(c("Rcpp","RcppArmadillo","ape","phangorn",
-#  "numDeriv","knitr"), repos = "http://cran.r-project.org")
+#  "numDeriv","knitr"), repos = "https://cran.r-project.org")
 #  
 #  install.packages("markophylo_1.0.2.tar.gz", repos = NULL, type = "source")
 
 ## ----eval=FALSE----------------------------------------------------------
 #  install.packages(c("Rcpp","RcppArmadillo","ape","phangorn",
-#  "numDeriv","knitr"), repos = "http://cran.r-project.org")
+#  "numDeriv","knitr"), repos = "https://cran.r-project.org")
 #  
 #  install.packages("markophylo_1.0.2.tar.gz", repos = NULL, type = "source")
 

@@ -1,19 +1,19 @@
-citHeader("To cite markophylo in publications, please use:")
+citHeader("To cite indelmiss in publications, please use:")
 
 citEntry(entry = "Article",
   title        = "markophylo: {M}arkov chain analysis on phylogenetic trees",
   author       = personList(as.person("Utkarsh J. Dang"),
                    as.person("G. Brian Golding")),
   journal      = "Bioinformatics",
-  year         = "2015",
-  volume       = "",
-  number       = "",
-  pages        = "",
+  year         = "2016",
+  volume       = "32",
+  number       = "1",
+  pages        = "130--132",
   doi          = "10.1093/bioinformatics/btv541",
 
   textVersion  =
-  paste("Utkarsh J. Dang, G. Brian Golding (2015).",
+  paste("Utkarsh J. Dang, G. Brian Golding (2016).",
         "markophylo: Markov chain analysis on phylogenetic trees.",
-        "Bioinformatics, btv541.",
-        "doi 10.1093/bioinformatics/btv541.")
+        "Bioinformatics 32(1): 130--132.",
+        "doi: 10.1093/bioinformatics/btv541.")
 )

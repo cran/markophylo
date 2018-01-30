@@ -1,6 +1,7 @@
 useDynLib(markophylo)
 
 export(estimaterates)
+export(estimaterates_f)
 export(print.markophylo)
 export(plottree)
 export(patterns)

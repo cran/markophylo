@@ -1,3 +1,16 @@
+markophylo v1.0-6 (Release date: 2018-01-29)
+==============
+Changes:
+
+* Experimental: New function (estimaterates_f) allows for fixing some parameters in the substitution rate matrix.
+* Maintainance update.
+
+markophylo v1.0-5 (Release date: 2016-01-19)
+==============
+Changes:
+
+* Allows for user-specification of starting values for the rates.
+
 markophylo v1.0-4 (Release date: 2015-12-31)
 ==============
 Changes:

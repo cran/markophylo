@@ -1,94 +1,4 @@
-print.markophylo <- function(x, ...) {
-  cat("Call:\n")
-  print.default(x$call)
-  cat("\n", x$taxa, "taxa with", x$phyl, "discrete character patterns were fitted.\n")
-  cat("-----------------------------------\n")
-  cat("Groups of nodes with the same rates:\n")
-  print.default(x$bg)
-  cat("-----------------------------------\n")
-  cat("Parameter Index Matrix\n")
-  mm_al <- x$modelmat
-  rownames(mm_al) <- colnames(mm_al) <- x$alphabet
-  print(mm_al)
-  cat("-----------------------------------\n")
-  for (i in x$modelnames) {
-    cat(i, "\n")
-    if (x$results[[i]]$convergence == 0) {
-      print.default(x$results[[i]]$parsep)
-      cat("-----------------------------------\n")
-      if (x$reversible) {
-        cat("Reversible option used. The root probabilities are estimated using maximum likelihood (see above for estimates and standard errors), and the rate matrix supplied to the function is symmetric (see above for estimates and standard errors). The estimated rate matrix can be written as the product of the symmetric matrix multiplied by a diagonal matrix (consisting of the estimated root probabilities). These rate estimates are:\n")
-        mm_al2 <- x$results[[i]]$modelmat2
-        rownames(mm_al2) <- colnames(mm_al2) <- x$alphabet
-        print(mm_al2)
-        print.default(x$results[[i]]$revcombined)
-      }
-      cat("Log-likelihood for model", i, ":", -x$results[[i]]$objective, "\n")
-      cat("AIC           for model", i, ":", x$results[[i]]$AIC, "\n")
-      cat("BIC           for model", i, ":", x$results[[i]]$BIC, "\n")
-      cat("-----------------------------------\n")
-    } else {
-      cat("Convergence not achieved.\nIncrease number of iterations and/or function calls. See control arguments for the optimization method used.\n")
-      cat("-----------------------------------\n")
-    }
-  }
-  if (!all(x$conv == 0)) 
-    cat("Not all models converged. \n")
-  cat("Time taken:", x$time[3], "seconds.\n")
-}
-# calibrate_ratemat <- function(x, Q, iroot){
-#   #Outputs the average number of transition events per site per evolutionary time unit.
-#   #x takes ...$results$wop$parsep$rates[,,1]
-#   #OR for reversible x takes x$results$wop$revcombined$rates[,,1]
-#   #Q takes ...$modelmat or ...$results$wop$modelmat2
-#   #iroot takes ...$results$wop$parsep$rates[,,1]
-#   #Should probably output iroot no matter if it is equal, stationary, or rpvec.
-#   #Already output if maxlik
-#   Q_out <- Q
-#   for (gf in 1:length(x)) {
-#     Q_out[Q == gf] <- x[gf]
-#   }
-#   diag(Q_out) <- -rowSums(Q_out, na.rm = TRUE)
-#   return(-sum(diag(Q_out)*iroot))
-# }
-plottree <- function(x, colors = NULL, ...) {
-  if (is.null(colors)) 
-    colors <- grDevices::rainbow(length(x$bg))
-  colo <- NULL
-  for (i in 1:nrow(x$tree$edge)) {
-    tmp <- which(unlist(lapply(lapply(x$bg, FUN = function(X) c(x$tree$edge[i, 1], x$tree$edge[i, 2]) %in% X), FUN = "all"), use.names = FALSE))
-    if ((length(tmp) > 1)) {
-      colo[i] <- tmp[which.min(unlist(lapply(x$bg, FUN = length)))]
-    } else{
-      colo[i] <- tmp
-    }
-  }
-  ape::plot.phylo(x$tree, edge.color = colors[colo], ...)
-}
-#########Check bg list of nodes argument###########
-checkbglist <- function(bg, tree){
-  all_branches <- TRUE
-  for (i in 1:length(tree$edge.length)) {
-    if (!any(unlist(lapply(lapply(bg, FUN = function(j) tree$edge[i,] %in% j),FUN = "all")))) all_branches <- FALSE
-  }
-  return(all_branches)
-}
-patterns <- function(x) { 
-  #x is the matrix of phyletic patterns...
-  if (is.data.frame(x)) x <- as.matrix(x)
-  wfn <- summary(as.factor(apply(x, 1, paste, collapse = " ")), maxsum = nrow(x))
-  b <- attr(wfn, "names")
-  ww <- unname(cbind(b, wfn))
-  if (is.character(x[1, 1])) {
-    databp_red1 <- na.omit(unlist(strsplit(ww[,1],split = " ")))
-  } else {
-    databp_red1 <- na.omit(as.numeric(unlist(strsplit(ww[,1],split = " "))))
-  }
-  databpr <- matrix(databp_red1, ncol = ncol(x), byrow = T)
-  colnames(databpr) <- colnames(x)
-  return(list(w = wfn, databp_red = databpr, names = colnames(x)))
-}
-estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FALSE, unobserved = NULL, alphabet = NULL, modelmat = NULL, bgtype = "listofnodes", bg = NULL, partition = NULL, ratevar = FALSE, nocat = 4, reversible = FALSE, numhessian = TRUE,  rootprob = NULL, rpvec = NULL, init = 0.9, lowli = 0.001, upli = 100, ...) {
+estimaterates_f <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FALSE, unobserved = NULL, alphabet = NULL, modelmat = NULL, bgtype = "listofnodes", bg = NULL, partition = NULL, ratevar = FALSE, nocat = 4, reversible = FALSE, numhessian = TRUE,  rootprob = NULL, rpvec = NULL, init = 0.9, lowli = 0.001, upli = 100, ...) {
   ptm <- proc.time()
   if (ratevar != FALSE) ratevar <- match.arg(ratevar,c("discgamma","partitionspecificgamma"))
   bgtype <- match.arg(bgtype, c("listofnodes", "ancestornodes"))
@@ -100,7 +10,7 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     stop("userphyl option is required.")
   if (!is.null(unobserved)) {
     if (!(is.matrix(unobserved) | is.data.frame(unobserved))) { 
-    stop("unobserved option should be a matrix.")
+      stop("unobserved option should be a matrix.")
     }
   }
   if (bgtype == "listofnodes" & !is.null(bg) & !is.list(bg))
@@ -230,7 +140,7 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     j <- unlist(lapply(lapply(bg, FUN = function(X) c(ad[1], ad[2]) %in% X), FUN = "all"), use.names = FALSE)
     if (sum(j) > 1) j[j][-which.min(unlist(lapply(bg, FUN = length)))] <- FALSE
     for (gf in 1:length(rates[, j])) {
-      Q[modelmat == gf] <- rates[gf, j]
+      Q[modelmat == gf  & modelmat == floor(modelmat)] <- rates[gf, j]
     }
     if (reversible & rootprob == "maxlik") Q <- sweep(Q, MARGIN = 2, FUN = "*", rpin, check.margin = FALSE)
     diag(Q) <- -.rowSums(Q, m = al, n = al, na.rm = TRUE)
@@ -308,7 +218,7 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
   results <- list()
   nodelist <- c(setdiff(tree1$edge[, 2], tips), len_tips + 1)
   F <- cbind(tree1$edge, tree1$edge.length)
-  npar_mmat <- sort(unique(as.vector(modelmat[modelmat > 0])), na.last = NA)
+  npar_mmat <- sort(unique(as.vector(modelmat[modelmat > 0 & modelmat == floor(modelmat)])), na.last = NA)
   le_npar_mmat <- length(npar_mmat)
   rates <- array(data = NA, dim = c(le_npar_mmat, csp, psp))
   #partition specific parameters are in the third dimension with a matrix of 
@@ -475,15 +385,15 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     Lixi_corr_init <- list()
     patlen_corr <- nrow(unobserved)
     Lixi_corr_init <- rep(list(matrix(data = 0, nrow = nooftaxa + nointnodes, ncol = al)), length = patlen_corr)
-      for (j in 1:patlen_corr) {
-        for (u in alseq) {
-          Lixi_corr_init[[j]][which(unobserved[j, ] == alphabet[u]), u] <- 1
-        }
+    for (j in 1:patlen_corr) {
+      for (u in alseq) {
+        Lixi_corr_init[[j]][which(unobserved[j, ] == alphabet[u]), u] <- 1
       }
+    }
   }
   tmp <- numeric(al)
   forav <- rep(list(modelmat), psp)
- 
+  
   ll <- function(model, pm_ll, rootp_ll, Lixi_in_ll) {
     tmp <- part_loopC(nocat, nodelist, al, tree1$edge[, 1], tree1$edge[, 2], pm_ll, Lixi_in_ll, len_tips)
     logll <- log(rowSums(sweep(tmp, MARGIN = 2, rootp_ll, `*`)))
@@ -515,7 +425,7 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
       }
     }
     # pm is a list with the first component referring to the partitions, the second to the discrete gamma categories, and the third to the edge lengths.
-
+    
     phy <- unlist_w * unlist(lapply(X = 1:psp, FUN = function(i) ll(model, pm[[i]], rootp = rootp[[i]], Lixi_in_ll = Lixi_init[[i]])), use.names = FALSE)
     if (!is.null(unobserved) & is.null(partition)) {
       corr <- unlist(lapply(X = 1:psp, FUN = function(i) ll(model, pm[[i]], rootp = rootp[[i]], Lixi_in_ll = Lixi_corr_init)), use.names = FALSE)
@@ -523,15 +433,15 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
     } else if (!is.null(unobserved) & !is.null(partition)) {
       corr <- lapply(X = 1:psp, FUN = function(i) ll(model, pm[[i]], rootp = rootp[[i]], Lixi_in_ll = Lixi_corr_init))
       return( -(sum(phy) - 
-                 sum(unlist(lapply(X = partition, FUN = length), 
-                                  use.names = FALSE) * 
-                 unlist(lapply(X = 
-                          lapply(X = 
-                                   lapply(X = corr, FUN = exp), 
-                                 FUN = sum), 
-                        FUN = function(x) log(1 - x)) ) ) ) )
+                  sum(unlist(lapply(X = partition, FUN = length), 
+                             use.names = FALSE) * 
+                        unlist(lapply(X = 
+                                        lapply(X = 
+                                                 lapply(X = corr, FUN = exp), 
+                                               FUN = sum), 
+                                      FUN = function(x) log(1 - x)) ) ) ) )
     } else{
-    return(-(sum(phy)))
+      return(-(sum(phy)))
     }
     # When the likelihood is being conditioned on observable patterns only, and a partitioned analysis is being done, the multitude of lapplys are basically computing on lists the equivalent of log(1 - sum(exp(corr))) and then these are multiplied by a vector of number of observations in each partition.
     #-ve of the value because being minimized by default.
@@ -621,9 +531,9 @@ estimaterates <- function(usertree = NULL, userphyl = NULL, matchtipstodata = FA
           for (gf in 1:length(res$parsep$rates[,ca,pa])) {
             Q_out[modelmat == gf] <- res$parsep$rates[,ca,pa][gf]
           }
-              Q_out <- sweep(Q_out, MARGIN = 2, FUN = "*", res$parsep$iroot, check.margin = FALSE) 
-              #iroot is never a list because only ever used with "maxlik", never "stationary". 
-              #the sweep method is ideal. However, because we are only indexing !is.na items, the multiplication by the diagonal matrix comprising the root probabilities method might also work...
+          Q_out <- sweep(Q_out, MARGIN = 2, FUN = "*", res$parsep$iroot, check.margin = FALSE) 
+          #iroot is never a list because only ever used with "maxlik", never "stationary". 
+          #the sweep method is ideal. However, because we are only indexing !is.na items, the multiplication by the diagonal matrix comprising the root probabilities method might also work...
           res$revcombined$rates[,ca,pa] <- Q_out[which(!is.na(modelmat2) & modelmat2 != 0)]
         }
       }

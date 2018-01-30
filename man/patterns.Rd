@@ -31,7 +31,7 @@ Utkarsh J. Dang and G. Brian Golding
 See also \code{\link{estimaterates}}.
 }
 \examples{
-#data(simdata1)
-#uniq_patt <- patterns(simdata1$data)
-#print(uniq_patt)
+data(simdata1)
+uniq_patt <- patterns(simdata1$data)
+print(uniq_patt)
 }
