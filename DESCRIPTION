@@ -1,8 +1,8 @@
 Package: markophylo
 Type: Package
 Title: Markov Chain Models for Phylogenetic Trees
-Version: 1.0.6
-Date: 2018-01-29
+Version: 1.0.7
+Date: 2019-03-22
 Author: Utkarsh J. Dang and G. Brian Golding
 Maintainer: Utkarsh J. Dang <udang@binghamton.edu>
 Description: Allows for fitting of maximum likelihood models using Markov chains
@@ -23,6 +23,6 @@ Depends: R (>= 2.10)
 VignetteBuilder: knitr
 LazyData: true
 NeedsCompilation: yes
-Packaged: 2018-01-30 16:34:28 UTC; udang
+Packaged: 2019-03-22 14:01:07 UTC; udang
 Repository: CRAN
-Date/Publication: 2018-01-30 17:14:26 UTC
+Date/Publication: 2019-03-22 15:00:03 UTC

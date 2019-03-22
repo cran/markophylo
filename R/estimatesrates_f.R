@@ -147,7 +147,7 @@ estimaterates_f <- function(usertree = NULL, userphyl = NULL, matchtipstodata = 
     return(expm(Q * ti))
   }
   ###########Data Import#########
-  if (!ape::is.binary.tree(usertree) | !ape::is.rooted(usertree)) {
+  if (!ape::is.binary.phylo(usertree) | !ape::is.rooted(usertree)) {
     usertree <- ape::multi2di(usertree)
     cat("Tree either not binary or not rooted.", "\n", "Transformed using multi2di from package ape.", "\n")
     cat("Labels of nodes of interest might change.\n")

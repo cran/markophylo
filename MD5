@@ -1,10 +1,10 @@
-1310b414dac0e4242c47f8bfb50a538b *DESCRIPTION
-e9ffbe912a0aff697d059dd332fe58a0 *NAMESPACE
-12f144ed2d4880c1c0ccbd5967ade93d *NEWS
+cd5e098a0c7dec16efe62f7910688a44 *DESCRIPTION
+1f728f8e9bb6941d35d6f17256942ff1 *NAMESPACE
+69df6593de2725a936ff8ddb2569ae17 *NEWS
 1021cb5123e7f3a0c13624b85939b1d0 *R/RcppExports.R
-a166f381e0f283bf8dd14fdf0465a2cf *R/custom-general14.R
-229cf81ce38cfdacf869f2c2e7c26cb7 *R/estimatesrates_f.R
-0f99756e03a6a789755f5df159910cb8 *build/vignette.rds
+d6e18d9deaa30d2d2ae01689f6d63522 *R/custom-general14.R
+9df67df248ffde12590409308c6887df *R/estimatesrates_f.R
+3219d09e61dfbe0be1b177e81d78ef0d *build/vignette.rds
 2e8f2dbe53a2254e66b5f80aa7166849 *data/simdata1.rda
 69e4087070d955dbb8bf2e931ee137c5 *data/simdata2.rda
 24b969c869f12f4a33ebfeb2df3e2f83 *data/simdata3.rda
@@ -13,7 +13,7 @@ a166f381e0f283bf8dd14fdf0465a2cf *R/custom-general14.R
 2efbfd9b803d4a2f6815f704cdf0ab45 *inst/CITATION
 bd72aa6d8010618be7300945d6c6ae72 *inst/doc/estimaterates.R
 de47019c347e137d576b178a397873b8 *inst/doc/estimaterates.Rmd
-9561b381a450be9b531cd5aaacb96261 *inst/doc/estimaterates.html
+2dfc42d8b474bd3717842ab575a5b175 *inst/doc/estimaterates.html
 331a8a86a8338766e0720e4cb163b973 *man/estimaterates.Rd
 157aee3ddffd102ba91010d85e7c8a89 *man/estimaterates_f.Rd
 68553320624d63eef623aaf0fe0a7916 *man/markophylo-package.Rd

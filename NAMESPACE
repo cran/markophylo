@@ -8,7 +8,7 @@ export(patterns)
 
 importFrom(Rcpp, evalCpp)
 importFrom(stats,na.omit,qgamma,nlminb)
-importFrom(ape,plot.phylo,is.binary.tree,is.rooted,reorder.phylo,read.tree,multi2di)
+importFrom(ape,plot.phylo,is.binary.phylo,is.rooted,reorder.phylo,read.tree,multi2di)
 importFrom(phangorn,Ancestors,Descendants)
 importFrom(numDeriv,hessian)
 importFrom(utils,read.table)
