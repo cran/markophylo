@@ -261,8 +261,8 @@ print(model5)
 ##Illustration 6: importing data and fitting a birth death model.
 Import some simulated data and tree from the web. There are 5000 discrete character patterns (four states in total: 1, 2, 3, and 4) for ten taxa. The data was simulated using a birth death model with rates 1 and 2 and equal base frequencies.
 ```{r}
-mp_data <- read.table("http://info.mcmaster.ca/~udang/mp_example_data", header = TRUE)
-mp_tree <- ape::read.tree("http://info.mcmaster.ca/~udang/mp_example_tree")
+mp_data <- read.table("https://raw.githubusercontent.com/ujdang/miscellaneous/master/mp_example_data", header = TRUE)
+mp_tree <- ape::read.tree("https://raw.githubusercontent.com/ujdang/miscellaneous/master/mp_example_tree")
 mp_model <- estimaterates(usertree = mp_tree, userphyl = mp_data,
                         alphabet = c(1, 2, 3, 4), rootprob = "equal",
                         modelmat = "BD")
