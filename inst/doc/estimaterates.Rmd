@@ -30,7 +30,7 @@ The package contains five simulated data sets. These data illustrate the kinds o
 - Correcting for multiple unobservable phyletic patterns, i.e., sampling (or acquisition or ascertainment) bias.
 
 ## Contact
-If you have any questions or requests for a feature, drop me a line at <udang@binghamton.edu>.
+If you have any questions or requests for a feature, drop me a line at <utkarshdang@cunet.carleton.ca>.
 
 ## Installation
 ### CRAN
@@ -56,7 +56,7 @@ install.packages("markophylo_1.0.2.tar.gz", repos = NULL, type = "source")
 ```
 Make sure the version number of *markophylo* reflects the latest version on CRAN.
 
-If "-lgfortran" and/or "-lquadmath" errors are encountered on a OS X system, try unpacking gfortran-4.8.2-darwin13.tar.bz2 from https://r.research.att.com/libs/ into /usr/local. This issue has been known to occur in the past with *RcppArmadillo*. This is also mentioned in the *Rcpp* FAQs vignette on https://cran.r-project.org/package=Rcpp/index.html.
+If "-lgfortran" and/or "-lquadmath" errors are encountered on a OS X system, you may need a gfortrain version. Previously, it used to be to download gfortran-4.8.2-darwin13.tar.bz2 file into /usr/local but the file version may have changed. This issue has been known to occur in the past with *RcppArmadillo*. This is also mentioned in the *Rcpp* FAQs vignette on https://cran.r-project.org/package=Rcpp/index.html.
 
 #### Windows
 Installing an *R* package from source that requires compilation on Windows requires prior installation of *Rtools* from https://cran.r-project.org/bin/windows/Rtools/. Rtools contains *MinGW* compilers needed for building packages requiring compilation of *Fortran*, *C* or *C++* code. The PATH variable should be allowed to be modified during installation of Rtools. If the above is not allowed, following the installation of *Rtools*, the PATH variable must be set to include "RTools/bin" and "Rtools/gcc-x.y.z/bin", where "x.y.z" refers to the version number of gcc. Then,

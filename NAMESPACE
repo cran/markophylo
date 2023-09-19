@@ -10,6 +10,7 @@ importFrom(Rcpp, evalCpp)
 importFrom(stats,na.omit,qgamma,nlminb)
 importFrom(ape,plot.phylo,is.binary.phylo,is.rooted,reorder.phylo,read.tree,multi2di)
 importFrom(phangorn,Ancestors,Descendants)
+importFrom(geiger,sim.char)
 importFrom(numDeriv,hessian)
 importFrom(utils,read.table)
 

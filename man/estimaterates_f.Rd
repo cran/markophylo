@@ -95,7 +95,7 @@ All arguments used while calling the estimaterates function are attached in a li
 \author{
 Utkarsh J. Dang and G. Brian Golding
 
-\email{udang@binghamton.edu}
+\email{utkarshdang@cunet.carleton.ca}
 }
 \note{
 Experimental function
@@ -110,7 +110,7 @@ Tane Kim and Weilong Hao 2014. DiscML: An R package for estimating evolutionary 
 
 \examples{
 ##############
-\dontrun{
+\donttest{
 rm(list=ls())
 set.seed(1) #set seed
 library(markophylo)

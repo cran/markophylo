@@ -22,7 +22,8 @@ patterns(x)
 \author{
 Utkarsh J. Dang and G. Brian Golding
 
-\email{udang@mcmaster.ca}}
+\email{utkarshdang@cunet.carleton.ca}
+}
 
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~

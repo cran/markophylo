@@ -24,6 +24,7 @@ Each data set contains a list that comprises a tree (called "tree") and data (ca
 \details{
 These data were simulated with either the geiger or the phangorn packages.
 }
+\value{Simulated datasets. See examples}
 \references{
 Schliep K.P. 2011. phangorn: phylogenetic analysis in R. Bioinformatics, 27(4)  592--593. R package version 1.99-12.
 

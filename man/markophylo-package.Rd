@@ -21,7 +21,7 @@ Function \code{\link{estimaterates}} is the main workhorse of the package, allow
 \author{
 Utkarsh J. Dang and G. Brian Golding
 
-\email{udang@mcmaster.ca}
+\email{utkarshdang@cunet.carleton.ca}
 }
 \references{
 Dirk Eddelbuettel and Conrad Sanderson (2014). RcppArmadillo: Accelerating R with high-performance C++ linear algebra. Computational Statistics and Data Analysis, 71, 1054--1063.

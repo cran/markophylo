@@ -16,11 +16,11 @@ plottree(x, colors = NULL, ...)
   \item{colors}{Default works well. However, a custom vector of colours can be specified here---should be the same length as length(x$bg). Note that these colours are used to colour the different branch groupings following their own rates.}
   \item{\dots}{Any further commands to ape::plot.phylo.}
 }
-
+\value{Plotting function. See examples}
 \author{
 Utkarsh J. Dang and G. Brian Golding
 
-\email{udang@mcmaster.ca}}
+\email{utkarshdang@cunet.carleton.ca}}
 
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~

@@ -1,9 +1,9 @@
 citHeader("To cite indelmiss in publications, please use:")
 
-citEntry(entry = "Article",
+bibentry(bibtype = "Article",
   title        = "markophylo: {M}arkov chain analysis on phylogenetic trees",
-  author       = personList(as.person("Utkarsh J. Dang"),
-                   as.person("G. Brian Golding")),
+  author       = c(person(given="Utkarsh J.", family="Dang", role=c("aut", "cre", "cph"), email="utkarshdang@cunet.carleton.ca"),
+  person(given="G. Brian", family="Golding", role=c("aut","fnd","cph"))),
   journal      = "Bioinformatics",
   year         = "2016",
   volume       = "32",

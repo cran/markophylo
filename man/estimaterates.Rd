@@ -115,7 +115,7 @@ All arguments used while calling the estimaterates function are attached in a li
 \author{
 Utkarsh J. Dang and G. Brian Golding
 
-\email{udang@binghamton.edu}
+\email{utkarshdang@cunet.carleton.ca}
 }
 \note{
 See the vignette for an in-depth look at some examples.

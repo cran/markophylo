@@ -13,11 +13,11 @@
 #  
 #  install.packages("markophylo_1.0.2.tar.gz", repos = NULL, type = "source")
 
-## ---- fig.show='asis',fig.align = 'center'------------------------------------
+## ----fig.show='asis',fig.align = 'center'-------------------------------------
 library(markophylo)
 data(simdata1)
 
-## ---- fig.show='asis',fig.align = 'center'------------------------------------
+## ----fig.show='asis',fig.align = 'center'-------------------------------------
 ape::plot.phylo(simdata1$tree, edge.width = 2, show.tip.label = FALSE, no.margin = TRUE)
 ape::nodelabels(frame = "circle", cex = 0.7)
 ape::tiplabels(frame = "circle", cex = 0.7)
@@ -41,7 +41,7 @@ print(model1)
 ## -----------------------------------------------------------------------------
 print(class(model1))
 
-## ---- echo=FALSE, results='asis'----------------------------------------------
+## ----echo=FALSE, results='asis'-----------------------------------------------
 knitr::kable(model1$w, row.names = NA, col.names = c("Number of Times Pattern Observed") )
 
 ## -----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ model2 <- estimaterates(usertree = simdata2$tree, userphyl = simdata2$data,
                         rootprob = "equal", modelmat = "ARD")
 print(model2)
 
-## ---- fig.show='asis',fig.align = 'center'------------------------------------
+## ----fig.show='asis',fig.align = 'center'-------------------------------------
 ape::plot.phylo(simdata2$tree, edge.width = 2, show.tip.label = FALSE, no.margin = TRUE)
 ape::nodelabels(frame = "circle", cex = 0.7)
 ape::tiplabels(frame = "circle", cex = 0.7)
@@ -84,7 +84,7 @@ model2_2 <- estimaterates(usertree = simdata2$tree, userphyl = simdata2$data,
                         rootprob = "equal", modelmat = "ARD")
 print(model2_2)
 
-## ---- fig.show='asis',fig.align = 'center'------------------------------------
+## ----fig.show='asis',fig.align = 'center'-------------------------------------
 plottree(model2, colors=c("blue", "darkgreen"), edge.width = 2, show.tip.label = FALSE, 
          no.margin = TRUE)
 ape::nodelabels(frame = "circle", cex = 0.7)
@@ -119,7 +119,7 @@ filteredsimdata4 <- simdata4$data[-c(filteralla, filterg3), ]
 dim(simdata4$data)
 dim(filteredsimdata4)
 
-## ---- results = "hide"--------------------------------------------------------
+## ----results = "hide"---------------------------------------------------------
 alphabet <- c("a", "c", "g", "t")
 allpatt <- expand.grid(alphabet, alphabet, alphabet, alphabet) #all possible combinations
 unob_patt_index_1 <- which(apply(allpatt, MARGIN = 1, FUN = function(x) table(x)["g"] >= 3) )

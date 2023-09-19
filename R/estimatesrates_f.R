@@ -477,6 +477,8 @@ estimaterates_f <- function(usertree = NULL, userphyl = NULL, matchtipstodata = 
   indelinit <- init
   ################Estimation################
   alphastart = 0.5
+  old <- options()
+  on.exit(options(old))
   options(digits = 7)
   if (rootprob == "maxlik" & ratevar == FALSE) {
     modelop <- list(wop = list(start = c(rep(indelinit, (csp * psp * le_npar_mmat)), rep(0, al - 1)), df = 1 * csp * psp * le_npar_mmat + 
